@@ -1,0 +1,4 @@
+сваггер
+http://130.193.52.33/docs#/default/main_files__post
+
+flutter pub run build_runner build --delete-conflicting-outputs

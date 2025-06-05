@@ -1,0 +1,70 @@
+{
+  "project_info": {
+    "project_number": "669784040705",
+    "project_id": "neurowood-d8fb0",
+    "storage_bucket": "neurowood-d8fb0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669784040705:android:f29f781ce8bf18305ca700",
+        "android_client_info": {
+          "package_name": "com.neuro_wood.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669784040705-13kt9822jb4u6aoujj28bdviktbeuort.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.neuro_wood.app",
+            "certificate_hash": "0a33493676a3e7ec3939f36340d6af0549d775fc"
+          }
+        },
+        {
+          "client_id": "669784040705-79aeit2is9dfgo5p8903asma2vrr1md0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.neuro_wood.app",
+            "certificate_hash": "1da4ee71c73dfd8080cf3801ad058eb4f1ed2612"
+          }
+        },
+        {
+          "client_id": "669784040705-oaj1kqico2da25fq10s363b15taopkvi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.neuro_wood.app",
+            "certificate_hash": "0d9eeb395e2c47df77aed38e95cbe63c8922eb5e"
+          }
+        },
+        {
+          "client_id": "669784040705-vrresa0r6e45mnbtgbiqa8pce0pdm992.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp8OuI5lcRQpJN3I_PdahEngpnIpBVc0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669784040705-vrresa0r6e45mnbtgbiqa8pce0pdm992.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "669784040705-qmp9ngg1119joa1k60vo0tqqtqd3nbjm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.neuroWood.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
