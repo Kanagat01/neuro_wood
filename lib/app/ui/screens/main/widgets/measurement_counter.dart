@@ -10,11 +10,11 @@ class MeasurementCounter extends StatelessWidget {
   final int balance;
   final int total;
   const MeasurementCounter({
-    Key? key,
+    super.key,
     required this.isFree,
     required this.balance,
     required this.total,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +28,7 @@ class MeasurementCounter extends StatelessWidget {
       progressColor = NeuroWoodColors.green;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 24,
-        horizontal: 16,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
         color: NeuroWoodColors.lightGray,
         borderRadius: BorderRadius.circular(14),
@@ -49,9 +46,7 @@ class MeasurementCounter extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(
-              height: 6,
-            ),
+            const SizedBox(height: 6),
           ],
           if (balance == 0)
             Text(
@@ -73,9 +68,7 @@ class MeasurementCounter extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-          const SizedBox(
-            height: 12,
-          ),
+          const SizedBox(height: 12),
           Material(
             child: Stack(
               children: [
@@ -89,7 +82,8 @@ class MeasurementCounter extends StatelessWidget {
                 ),
                 Container(
                   height: 13,
-                  width: (MediaQuery.of(context).size.width - 64) /
+                  width:
+                      (MediaQuery.of(context).size.width - 64) /
                       total *
                       balance,
                   decoration: BoxDecoration(
@@ -100,9 +94,7 @@ class MeasurementCounter extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16),
           Text(
             'measurementsOverSubtitle'.tr(),
             style: const TextStyle(
@@ -112,12 +104,11 @@ class MeasurementCounter extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(
-            height: 12,
-          ),
+          const SizedBox(height: 12),
           PrimaryButton(
-            textColor:
-                balance == 0 ? NeuroWoodColors.white : NeuroWoodColors.green,
+            textColor: balance == 0
+                ? NeuroWoodColors.white
+                : NeuroWoodColors.green,
             primaryColor: balance == 0
                 ? NeuroWoodColors.green
                 : NeuroWoodColors.darkGray2,
@@ -150,15 +141,15 @@ class MeasurementCounter extends StatelessWidget {
   }
 
   _launch(
-      Uri uri, Function(BuildContext)? fallback, BuildContext context) async {
-    launchUrl(uri).then((value) {
-      if (fallback != null && !value) {
-        fallback(context);
-      }
-    }).catchError((_) {
-      if (fallback != null) {
-        fallback(context);
-      }
-    });
+    Uri uri,
+    Function(BuildContext)? fallback,
+    BuildContext context,
+  ) async {
+    final shouldFallback = await launchUrl(uri);
+    if (!context.mounted) return;
+
+    if (fallback != null && !shouldFallback) {
+      fallback(context);
+    }
   }
 }

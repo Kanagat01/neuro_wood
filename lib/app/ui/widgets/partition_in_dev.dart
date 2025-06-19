@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class PartitionInDev extends StatelessWidget {
-  const PartitionInDev({Key? key}) : super(key: key);
+  const PartitionInDev({super.key});
 
   @override
   Widget build(BuildContext context) {

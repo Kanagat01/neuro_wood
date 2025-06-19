@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neuro_wood/app/data/model/user_additional_model.dart';
 import 'package:neuro_wood/app/domain/entities/measure_type.dart';
 import 'package:neuro_wood/app/domain/repositories/i_user_additional_repository.dart';
@@ -13,8 +13,10 @@ class MainScreenCubit extends Cubit<MainScreenState> {
   final Permissions _permissions;
   final IUserAdditionalRepository userRepository;
   MainScreenState prevState = MainScreenState.initial;
-  ToggleCubit buttonEnabled =
-      getIt.get<ToggleCubit>(param1: true, param2: null);
+  ToggleCubit buttonEnabled = getIt.get<ToggleCubit>(
+    param1: true,
+    param2: null,
+  );
   late ToggleCubit showPullUp;
   late bool showOnboarding;
   final MeasureLimitCubit measureLimitCubit;
@@ -23,16 +25,18 @@ class MainScreenCubit extends Cubit<MainScreenState> {
     required Permissions permissions,
     required this.userRepository,
     required this.measureLimitCubit,
-  })  : _permissions = permissions,
-        super(MainScreenState.initial) {
+  }) : _permissions = permissions,
+       super(MainScreenState.initial) {
     userRepository.getAdditional().fold(
       (l) {
         showPullUp = getIt.get<ToggleCubit>(param1: false, param2: null);
         showOnboarding = true;
       },
       (r) {
-        showPullUp =
-            getIt.get<ToggleCubit>(param1: r.showedPullUp, param2: null);
+        showPullUp = getIt.get<ToggleCubit>(
+          param1: r.showedPullUp,
+          param2: null,
+        );
         showOnboarding = r.showedOnboarding;
       },
     );
@@ -54,8 +58,9 @@ class MainScreenCubit extends Cubit<MainScreenState> {
     // final map = {
     //   for (final p in PermissionsEnum.values) p: await _permissions.checkPermission(p)
     // };
-    final List<Future<PermissionStatus>> allFuturePerms =
-        PermissionsEnum.values.map(_permissions.checkPermission).toList();
+    final List<Future<PermissionStatus>> allFuturePerms = PermissionsEnum.values
+        .map(_permissions.checkPermission)
+        .toList();
     // final map = {for (final p in PermissionsEnum.values) p: await _permissions.checkPermission(p)};
 
     //проверяем все статусы разрешений
@@ -86,30 +91,24 @@ class MainScreenCubit extends Cubit<MainScreenState> {
   setShowedPullUp() {
     if (!showPullUp.state) {
       showPullUp.set(true);
-      userRepository.getAdditional().fold(
-        (l) {},
-        (r) {
-          UserAdditionalModel m = UserAdditionalModel.fromEntity(
-            UserAdditionalModel.fromEntity(r).copyWith(showedPullUp: true),
-          );
-          userRepository.setAdditional(m);
-        },
-      );
+      userRepository.getAdditional().fold((l) {}, (r) {
+        UserAdditionalModel m = UserAdditionalModel.fromEntity(
+          UserAdditionalModel.fromEntity(r).copyWith(showedPullUp: true),
+        );
+        userRepository.setAdditional(m);
+      });
     }
   }
 
   setShowedOnboarding() {
     if (!showOnboarding) {
       showOnboarding = true;
-      userRepository.getAdditional().fold(
-        (l) {},
-        (r) {
-          UserAdditionalModel m = UserAdditionalModel.fromEntity(
-            UserAdditionalModel.fromEntity(r).copyWith(showedOnboarding: true),
-          );
-          userRepository.setAdditional(m);
-        },
-      );
+      userRepository.getAdditional().fold((l) {}, (r) {
+        UserAdditionalModel m = UserAdditionalModel.fromEntity(
+          UserAdditionalModel.fromEntity(r).copyWith(showedOnboarding: true),
+        );
+        userRepository.setAdditional(m);
+      });
     }
   }
 }

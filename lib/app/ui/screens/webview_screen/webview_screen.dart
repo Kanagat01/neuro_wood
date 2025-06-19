@@ -1,6 +1,6 @@
 // import 'dart:async';
 // import 'dart:io';
-// import 'package:auto_route/auto_route.dart';
+//
 // import 'package:easy_localization/easy_localization.dart';
 // import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 // import 'package:neuro_wood/core/ui/theme.dart';
@@ -9,9 +9,9 @@
 
 // class WebviewScreen extends StatefulWidget {
 //   const WebviewScreen({
-//     Key? key,
+//     super.key,
 //     required this.url,
-//   }) : super(key: key);
+//   });
 //   final String url;
 
 //   @override
@@ -43,9 +43,9 @@
 //               color: NeuroWoodColors.black,
 //               splashRadius: 24,
 //               onPressed: () {
-//                 context.router.pop();
+//                 context.pop();
 //               },
-//               icon: const Icon(NeuroWoodIcons.arrow_left),
+//               icon: const Icon(NeuroWoodIcons.arrowLeft),
 //             ),
 //             Text(
 //               "backButton".tr(),

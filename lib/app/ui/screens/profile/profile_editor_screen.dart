@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +15,7 @@ import 'package:neuro_wood/core/ui/theme.dart';
 
 class ProfileEditorScreen extends StatelessWidget {
   final UserEntity user;
-  const ProfileEditorScreen({Key? key, required this.user}) : super(key: key);
+  const ProfileEditorScreen({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +31,8 @@ class ProfileEditorScreen extends StatelessWidget {
           child: Center(
             child: BlocConsumer<ProfileEditorBloc, ProfileEditorState>(
               listener: (context, state) {
-                state.maybeWhen(
-                  error: (e) {
+                switch (state) {
+                  case ProfileEditorError(:final e):
                     Dialogs.showDialogMessage(
                       title: "thereWasAnErrorTitle".tr(),
                       text: e,
@@ -48,12 +47,11 @@ class ProfileEditorScreen extends StatelessWidget {
                         ),
                       ],
                     );
-                  },
-                  sucess: () {
-                    context.router.pop(true);
-                  },
-                  orElse: () {},
-                );
+                    break;
+                  case ProfileEditorSuccess():
+                    Navigator.of(context).pop(true);
+                    break;
+                }
               },
               buildWhen: (_, __) => true,
               builder: (context, state) {
@@ -121,11 +119,13 @@ class ProfileEditorScreen extends StatelessWidget {
                                 if (v?.isEmpty ?? true) return null;
                                 String value =
                                     v?.replaceAll(RegExp(r'[^0-9]'), '') ?? '';
-                                if (value.length < 10)
+                                if (value.length < 10) {
                                   return "incorrectPhoneNumberValidate".tr();
+                                }
                                 return null;
                               },
-                              selectionControls: OnPastePhone().getPlatform(),
+                              contextMenuBuilder: OnPastePhone()
+                                  .getContextMenuBuilder(),
                               hint: '900 000 00 00',
                               keyboardType: TextInputType.number,
                               prefixIcon: Padding(
@@ -179,13 +179,14 @@ class ProfileEditorScreen extends StatelessWidget {
                                       const ProfileEditorEvent.save(),
                                     )
                                   : null,
-                              icon: state.maybeWhen(
-                                sending: () => const CupertinoActivityIndicator(
-                                  radius: 10,
-                                  color: NeuroWoodColors.white,
-                                ),
-                                orElse: () => null,
-                              ),
+                              icon: switch (state) {
+                                ProfileEditorSending() =>
+                                  const CupertinoActivityIndicator(
+                                    radius: 10,
+                                    color: NeuroWoodColors.white,
+                                  ),
+                                _ => null,
+                              },
                             );
                           },
                         ),

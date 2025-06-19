@@ -1,7 +1,7 @@
 part of 'measure_limit_cubit.dart';
 
 @freezed
-class MeasureLimitState with _$MeasureLimitState {
+abstract class MeasureLimitState with _$MeasureLimitState {
   const factory MeasureLimitState({
     required int totalCount,
     required int leftCount,

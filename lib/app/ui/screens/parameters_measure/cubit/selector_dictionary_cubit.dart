@@ -1,7 +1,7 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SelectorDictionaryCubit<T> extends Cubit<T?> {
-  SelectorDictionaryCubit(T? value) : super(value);
+  SelectorDictionaryCubit(super.value);
 
   set(T? value) {
     emit(value);

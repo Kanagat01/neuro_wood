@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:neuro_wood/app/domain/entities/user_entity.dart';
 import 'package:neuro_wood/app/domain/repositories/i_user_repository.dart';
@@ -8,9 +8,8 @@ part 'profile_cubit.freezed.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final IUserRepository userRepository;
-  ProfileCubit({
-    required this.userRepository,
-  }) : super(const ProfileState.initial());
+  ProfileCubit({required this.userRepository})
+    : super(const ProfileState.initial());
 
   getData() {
     final eitherUser = userRepository.getUser();
@@ -24,7 +23,5 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  deleteUser(){
-    
-  }
+  deleteUser() {}
 }

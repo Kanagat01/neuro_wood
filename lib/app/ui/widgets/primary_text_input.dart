@@ -6,7 +6,7 @@ class PrimaryTextInput extends StatelessWidget {
   final String label;
   final String? hint;
   const PrimaryTextInput({
-    Key? key,
+    super.key,
     this.controller,
     this.prefixIcon,
     this.hint,
@@ -20,8 +20,8 @@ class PrimaryTextInput extends StatelessWidget {
     this.autovalidateMode,
     this.maxLength,
     this.inputFormatters,
-    this.selectionControls,
-  }) : super(key: key);
+    this.contextMenuBuilder,
+  });
 
   final TextEditingController? controller;
   final List<TextInputFormatter>? inputFormatters;
@@ -34,7 +34,7 @@ class PrimaryTextInput extends StatelessWidget {
   final bool readOnly;
   final int? maxLength;
   final AutovalidateMode? autovalidateMode;
-  final TextSelectionControls? selectionControls;
+  final Widget Function(BuildContext, EditableTextState)? contextMenuBuilder;
 
   OutlineInputBorder get border => const OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(16.0)),
@@ -52,7 +52,7 @@ class PrimaryTextInput extends StatelessWidget {
         ),
         TextFormField(
           inputFormatters: inputFormatters,
-          selectionControls: selectionControls,
+          contextMenuBuilder: contextMenuBuilder,
           maxLength: maxLength,
           readOnly: readOnly,
           focusNode: focusNode,

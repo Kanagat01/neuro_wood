@@ -31,26 +31,17 @@ class CameraMask extends ShapeBorder {
 
   @override
   Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
-    Path _getLeftTopPath(Rect rect) {
+    Path getLeftTopPath(Rect rect) {
       return Path()
         ..moveTo(rect.left, rect.bottom)
         ..lineTo(rect.left, rect.top)
         ..lineTo(rect.right, rect.top);
     }
 
-    return _getLeftTopPath(rect)
-      ..lineTo(
-        rect.right,
-        rect.bottom,
-      )
-      ..lineTo(
-        rect.left,
-        rect.bottom,
-      )
-      ..lineTo(
-        rect.left,
-        rect.top,
-      );
+    return getLeftTopPath(rect)
+      ..lineTo(rect.right, rect.bottom)
+      ..lineTo(rect.left, rect.bottom)
+      ..lineTo(rect.left, rect.top);
   }
 
   @override
@@ -100,22 +91,26 @@ class CameraMask extends ShapeBorder {
       ..style = PaintingStyle.fill;
 
     canvas
-      ..saveLayer(
-        rect,
-        backgroundPaint,
-      )
-      ..drawRect(
-        rect,
-        backgroundPaint,
-      )
+      ..saveLayer(rect, backgroundPaint)
+      ..drawRect(rect, backgroundPaint)
       ..drawRect(mainRect, boxPaint)
       ..drawRect(etalonRect, etalonBorderPaint)
       ..drawRect(mainRect, borderPaint)
       ..drawCircle(etalonRect.center, 5, circlePaint);
-    _drawDashedLine(canvas, etalonRect.left, etalonRect.right,
-        etalonRect.center.dy, Axis.horizontal);
-    _drawDashedLine(canvas, etalonRect.top, etalonRect.bottom,
-        etalonRect.center.dx, Axis.vertical);
+    _drawDashedLine(
+      canvas,
+      etalonRect.left,
+      etalonRect.right,
+      etalonRect.center.dy,
+      Axis.horizontal,
+    );
+    _drawDashedLine(
+      canvas,
+      etalonRect.top,
+      etalonRect.bottom,
+      etalonRect.center.dx,
+      Axis.vertical,
+    );
     canvas.restore();
   }
 
@@ -130,7 +125,7 @@ class CameraMask extends ShapeBorder {
     const int dashSpace = 4;
     const int offset = 2;
 
-    Offset _getOffset(double p) {
+    Offset getOffset(double p) {
       return axis == Axis.horizontal ? Offset(p, point) : Offset(point, p);
     }
 
@@ -147,20 +142,23 @@ class CameraMask extends ShapeBorder {
 
     if (startDash > dashWidth) {
       canvas.drawLine(
-        _getOffset(start + offset / 2),
-        _getOffset(start + offset / 2 + startDash - dashWidth),
+        getOffset(start + offset / 2),
+        getOffset(start + offset / 2 + startDash - dashWidth),
         paint,
       );
       canvas.drawLine(
-        _getOffset(end - offset / 2),
-        _getOffset(end - offset / 2 - startDash + dashWidth),
+        getOffset(end - offset / 2),
+        getOffset(end - offset / 2 - startDash + dashWidth),
         paint,
       );
     }
 
     while (pointVar < end - startDash) {
       canvas.drawLine(
-          _getOffset(pointVar), _getOffset(pointVar + dashWidth), paint);
+        getOffset(pointVar),
+        getOffset(pointVar + dashWidth),
+        paint,
+      );
 
       pointVar += dashWidth + dashSpace;
     }

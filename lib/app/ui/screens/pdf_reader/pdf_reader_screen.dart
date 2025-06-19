@@ -1,19 +1,23 @@
-import 'package:auto_route/auto_route.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
-import 'package:pdf_render/pdf_render_widgets.dart';
 
 class PDFReaderScreen extends StatelessWidget {
   final String pdfPath;
   final bool isAsset;
-  const PDFReaderScreen({Key? key, required this.pdfPath, this.isAsset = true})
-    : super(key: key);
+  const PDFReaderScreen({
+    super.key,
+    required this.pdfPath,
+    this.isAsset = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: NeuroWoodColors.darkGray,
       appBar: AppBar(
         backgroundColor: NeuroWoodColors.white,
         elevation: 0,
@@ -24,9 +28,9 @@ class PDFReaderScreen extends StatelessWidget {
               color: NeuroWoodColors.black,
               splashRadius: 24,
               onPressed: () {
-                context.router.pop();
+                GoRouter.of(context).pop();
               },
-              icon: const Icon(NeuroWoodIcons.arrow_left),
+              icon: const Icon(NeuroWoodIcons.arrowLeft),
             ),
             Text(
               "backButton".tr(),
@@ -38,20 +42,8 @@ class PDFReaderScreen extends StatelessWidget {
         ),
       ),
       body: isAsset
-          ? PdfViewer.openAsset(
-              pdfPath,
-              params: const PdfViewerParams(
-                maxScale: 2,
-                pageDecoration: BoxDecoration(color: NeuroWoodColors.darkGray),
-              ),
-            )
-          : PdfViewer.openFile(
-              pdfPath,
-              params: const PdfViewerParams(
-                maxScale: 2,
-                pageDecoration: BoxDecoration(color: NeuroWoodColors.darkGray),
-              ),
-            ),
+          ? PdfViewer.asset(pdfPath, params: const PdfViewerParams(maxScale: 2))
+          : PdfViewer.file(pdfPath, params: const PdfViewerParams(maxScale: 2)),
     );
   }
 }

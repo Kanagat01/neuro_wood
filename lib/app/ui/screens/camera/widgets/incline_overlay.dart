@@ -6,11 +6,11 @@ import 'package:neuro_wood/core/ui/theme.dart';
 
 class InclineOverlay extends StatelessWidget {
   const InclineOverlay({
-    Key? key,
+    super.key,
     required this.stream,
     required this.constraints,
     required this.scale,
-  }) : super(key: key);
+  });
   final Stream<InclineMeasure> stream;
   final BoxConstraints constraints;
   final double scale;
@@ -83,7 +83,8 @@ class InclineOverlay extends StatelessWidget {
                       filter: ImageFilter.blur(sigmaX: 1, sigmaY: -1),
                       child: Container(
                         margin: EdgeInsets.only(
-                          top: (28 + MediaQuery.of(context).viewPadding.top) *
+                          top:
+                              (28 + MediaQuery.of(context).viewPadding.top) *
                               scale,
                           right: 24,
                           left: 24,
@@ -107,9 +108,7 @@ class InclineOverlay extends StatelessWidget {
                     ),
                   ),
                   CustomPaint(
-                    foregroundPainter: InclinePainter(
-                      constraints: constraints,
-                    ),
+                    foregroundPainter: InclinePainter(constraints: constraints),
                     child: Center(
                       child: SizedBox(
                         width: 118,
@@ -161,9 +160,7 @@ class InclineOverlay extends StatelessWidget {
 
 class InclinePainter extends CustomPainter {
   final BoxConstraints constraints;
-  const InclinePainter({
-    required this.constraints,
-  });
+  const InclinePainter({required this.constraints});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -173,20 +170,11 @@ class InclinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    final Offset center = Offset(
-      size.width / 2,
-      size.height / 2,
-    );
+    final Offset center = Offset(size.width / 2, size.height / 2);
     double r = size.width / 2 - 32;
     r = r > 60 ? 60 : r;
-    final ll = Offset(
-      size.width / 2 - r,
-      size.height / 2,
-    );
-    final rl = Offset(
-      size.width / 2 + r,
-      size.height / 2,
-    );
+    final ll = Offset(size.width / 2 - r, size.height / 2);
+    final rl = Offset(size.width / 2 + r, size.height / 2);
     canvas
       ..drawCircle(center, r, paint)
       ..drawLine(ll, Offset(ll.dx - 11, ll.dy), paint)

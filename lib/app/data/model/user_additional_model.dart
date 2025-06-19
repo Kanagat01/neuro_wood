@@ -2,20 +2,13 @@ import 'package:neuro_wood/app/domain/entities/user_additional_entity.dart';
 
 class UserAdditionalModel extends UserAdditionalEntity {
   const UserAdditionalModel({
-    bool showedPullUp = false,
-    bool showedOnboarding = false,
-    bool showLimit = false,
-    required String uid,
-  }) : super(
-          showedPullUp: showedPullUp,
-          showedOnboarding: showedOnboarding,
-          uid: uid,
-          showLimit: showLimit,
-        );
+    super.showedPullUp = false,
+    super.showedOnboarding = false,
+    super.showLimit = false,
+    required super.uid,
+  });
 
-  factory UserAdditionalModel.fromEntity(
-    UserAdditionalEntity entity,
-  ) =>
+  factory UserAdditionalModel.fromEntity(UserAdditionalEntity entity) =>
       UserAdditionalModel(
         uid: entity.uid,
         showedPullUp: entity.showedPullUp,

@@ -1,29 +1,27 @@
-import 'dart:convert';
-
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:neuro_wood/app/domain/entities/user_additional_entity.dart';
 import 'package:neuro_wood/app/domain/repositories/i_user_repository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'measure_limit_state.dart';
 part 'measure_limit_cubit.freezed.dart';
 part 'measure_limit_cubit.g.dart';
 
-const _recognitionQueue = 'RECOGNITION_QUEUE';
-const _measureLimit = 'MEASURE_LIMIT';
+// const _recognitionQueue = 'RECOGNITION_QUEUE';
+// const _measureLimit = 'MEASURE_LIMIT';
 
 class MeasureLimitCubit extends Cubit<MeasureLimitState> {
   final IUserRepository userRepository;
 
-  MeasureLimitCubit(
-    this.userRepository,
-  ) : super(const MeasureLimitState(
+  MeasureLimitCubit(this.userRepository)
+    : super(
+        const MeasureLimitState(
           totalCount: 0,
           leftCount: 0,
           showBlock: false,
           isFree: false,
-        ));
+        ),
+      );
 
   fetch() async {
     // final prefs = await SharedPreferences.getInstance();
@@ -43,7 +41,7 @@ class MeasureLimitCubit extends Cubit<MeasureLimitState> {
             showBlock: r.additional.showLimit,
             leftCount: r.subscription.recognitionLeft,
             totalCount: r.subscription.recognitionAvailable,
-            isFree: r.subscription.isFree
+            isFree: r.subscription.isFree,
           ),
         );
       },
@@ -76,9 +74,7 @@ class MeasureLimitCubit extends Cubit<MeasureLimitState> {
         //   incrementVolume += list.fold(0.0, (p, e) => p + double.parse(e));
         // }
         if (!r.additional.showLimit && r.subscription.recognitionLeft < 9) {
-          additional = r.additional.copyWith(
-            showLimit: true,
-          );
+          additional = r.additional.copyWith(showLimit: true);
         }
         final upd = r.copyWith(
           recognitionsCount: r.recognitionsCount + count,

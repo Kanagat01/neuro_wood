@@ -8,21 +8,14 @@ class PainterBuilder {
   PainterBuilder(this.imageInfo);
 
   CustomPainter buildLinesPainter({required List<LineCoordsEntity> lines}) {
-    return LinesPainter(
-      lines: lines,
-      imageInfo: imageInfo,
-    );
+    return LinesPainter(lines: lines, imageInfo: imageInfo);
   }
 
   CustomPainter buildMarkupPainter({
     required List<MarkupEntity> markups,
     required MarkupType shape,
   }) {
-    return MarkupPainter(
-      markups: markups,
-      imageInfo: imageInfo,
-      shape: shape,
-    );
+    return MarkupPainter(markups: markups, imageInfo: imageInfo, shape: shape);
   }
 }
 
@@ -30,10 +23,7 @@ class LinesPainter extends CustomPainter {
   final List<LineCoordsEntity> lines;
   final ImageInfo imageInfo;
 
-  LinesPainter({
-    required this.lines,
-    required this.imageInfo,
-  });
+  LinesPainter({required this.lines, required this.imageInfo});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -119,10 +109,7 @@ class MarkupPainter extends CustomPainter {
       ..strokeWidth = size.width / 270
       ..style = PaintingStyle.stroke;
     final double scale = imageInfo.image.width.toDouble() / size.width;
-    final textStyle = TextStyle(
-      color: Colors.red,
-      fontSize: size.width / 20,
-    );
+    final textStyle = TextStyle(color: Colors.red, fontSize: size.width / 20);
 
     for (final m in markups) {
       Rect rect = Rect.fromLTRB(
@@ -144,10 +131,7 @@ class MarkupPainter extends CustomPainter {
       Offset center = rect.center;
       double scaleFactor = 1.1;
       if (text.isNotEmpty) {
-        TextSpan? textSpan = TextSpan(
-          text: text,
-          style: textStyle,
-        );
+        TextSpan? textSpan = TextSpan(text: text, style: textStyle);
         final textPainter = TextPainter(
           text: textSpan,
           textDirection: TextDirection.ltr,
@@ -156,7 +140,7 @@ class MarkupPainter extends CustomPainter {
         while (textPainter.width > rect.width * 0.8 ||
             textPainter.height > rect.height * 0.8) {
           scaleFactor -= 0.1;
-          textPainter.textScaleFactor = scaleFactor;
+          textPainter.textScaler = TextScaler.linear(scaleFactor);
           textPainter.layout();
         }
 
@@ -180,7 +164,4 @@ class MarkupPainter extends CustomPainter {
   }
 }
 
-enum MarkupType {
-  diameter,
-  sort,
-}
+enum MarkupType { diameter, sort }

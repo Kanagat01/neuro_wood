@@ -14,14 +14,14 @@ class MeasureTypeButton extends StatelessWidget {
   final double height;
 
   const MeasureTypeButton({
-    Key? key,
+    super.key,
     required this.title,
     required this.image,
     required this.type,
     this.subtitle,
     required this.width,
     required this.height,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +53,9 @@ class MeasureTypeButton extends StatelessWidget {
                 return InkWell(
                   onTap: state == MainScreenState.initial
                       ? () {
-                          context
-                              .read<MainScreenCubit>()
-                              .checkPermissions(type);
+                          context.read<MainScreenCubit>().checkPermissions(
+                            type,
+                          );
                         }
                       : () {},
                   borderRadius: BorderRadius.circular(16),
@@ -63,7 +63,9 @@ class MeasureTypeButton extends StatelessWidget {
                     width: width,
                     height: height,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

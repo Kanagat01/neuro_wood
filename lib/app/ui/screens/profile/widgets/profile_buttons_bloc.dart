@@ -1,12 +1,12 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class ProfileButtonsBlock extends StatelessWidget {
-  const ProfileButtonsBlock({Key? key}) : super(key: key);
+  const ProfileButtonsBlock({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class ProfileButtonsBlock extends StatelessWidget {
           // ProfileButton(
           //   title: "subscriptionOptions".tr(),
           //   onPressed: () {
-          //     context.router.push(const Subscriptions());
+          //     context.push('/subscriptions');
           //   },
           // ),
           // const SizedBox(
@@ -30,10 +30,9 @@ class ProfileButtonsBlock extends StatelessWidget {
           ProfileButton(
             title: "termsOfUse".tr(),
             onPressed: () {
-              context.router.push(
-                PDFReaderScreen(
-                  pdfPath: 'assets/docs/user_agreement_terms.pdf',
-                ),
+              context.push(
+                '/pdf',
+                extra: {'pdfPath': 'assets/docs/user_agreement_terms.pdf'},
               );
             },
           ),
@@ -53,8 +52,11 @@ class ProfileButtonsBlock extends StatelessWidget {
 class ProfileButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String title;
-  const ProfileButton({Key? key, required this.onPressed, required this.title})
-    : super(key: key);
+  const ProfileButton({
+    super.key,
+    required this.onPressed,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +75,7 @@ class ProfileButton extends StatelessWidget {
                 ),
               ),
               const Icon(
-                NeuroWoodIcons.arrow_right,
+                NeuroWoodIcons.arrowRight,
                 color: NeuroWoodColors.black,
                 size: 24,
               ),

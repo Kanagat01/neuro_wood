@@ -10,11 +10,11 @@ class PreviewPanel extends StatelessWidget {
   final VoidCallback sendPressed;
 
   const PreviewPanel({
-    Key? key,
+    super.key,
     required this.paddingBottom,
     required this.backPressed,
     required this.sendPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,10 @@ class PreviewPanel extends StatelessWidget {
       height: 124 + paddingBottom,
       width: MediaQuery.of(context).size.width,
       color: Colors.black,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8).copyWith(bottom: paddingBottom + 24),
+      padding: const EdgeInsets.symmetric(
+        vertical: 24,
+        horizontal: 8,
+      ).copyWith(bottom: paddingBottom + 24),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -32,7 +35,7 @@ class PreviewPanel extends StatelessWidget {
             children: [
               _PanelIconButton(
                 icon: const Icon(
-                  NeuroWoodIcons.arrow_left,
+                  NeuroWoodIcons.arrowLeft,
                   size: 24,
                   color: NeuroWoodColors.white,
                 ),
@@ -40,9 +43,7 @@ class PreviewPanel extends StatelessWidget {
               ),
               Text(
                 'backButton'.tr(),
-                style: const TextStyle(
-                  color: NeuroWoodColors.white,
-                ),
+                style: const TextStyle(color: NeuroWoodColors.white),
               ),
             ],
           ),
@@ -50,7 +51,7 @@ class PreviewPanel extends StatelessWidget {
             children: [
               _PanelIconButton(
                 icon: const Icon(
-                  NeuroWoodIcons.arrow_right,
+                  NeuroWoodIcons.arrowRight,
                   size: 24,
                   color: NeuroWoodColors.white,
                 ),
@@ -58,9 +59,7 @@ class PreviewPanel extends StatelessWidget {
               ),
               Text(
                 'measureButton'.tr(),
-                style: const TextStyle(
-                  color: NeuroWoodColors.white,
-                ),
+                style: const TextStyle(color: NeuroWoodColors.white),
               ),
             ],
           ),
@@ -77,12 +76,12 @@ class CameraPanel extends StatelessWidget {
   final VoidCallback? takePhotoPressed;
 
   const CameraPanel({
-    Key? key,
+    super.key,
     required this.paddingBottom,
     this.backPressed,
     this.galleryPressed,
     this.takePhotoPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +89,10 @@ class CameraPanel extends StatelessWidget {
       height: 124 + paddingBottom,
       width: MediaQuery.of(context).size.width,
       color: Colors.black,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8).copyWith(bottom: paddingBottom + 24),
+      padding: const EdgeInsets.symmetric(
+        vertical: 24,
+        horizontal: 8,
+      ).copyWith(bottom: paddingBottom + 24),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -98,15 +100,13 @@ class CameraPanel extends StatelessWidget {
         children: [
           _PanelIconButton(
             icon: const Icon(
-              NeuroWoodIcons.arrow_left,
+              NeuroWoodIcons.arrowLeft,
               size: 24,
               color: NeuroWoodColors.white,
             ),
             onPressed: backPressed,
           ),
-          _TakeShotButton(
-            onPressed: takePhotoPressed,
-          ),
+          _TakeShotButton(onPressed: takePhotoPressed),
           if (kDebugMode)
             _PanelIconButton(
               icon: const RotatedBox(
@@ -120,9 +120,7 @@ class CameraPanel extends StatelessWidget {
               onPressed: galleryPressed,
             )
           else
-            const SizedBox(
-              width: 48,
-            )
+            const SizedBox(width: 48),
         ],
       ),
     );
@@ -131,10 +129,7 @@ class CameraPanel extends StatelessWidget {
 
 class _TakeShotButton extends StatelessWidget {
   final VoidCallback? onPressed;
-  const _TakeShotButton({
-    Key? key,
-    this.onPressed,
-  }) : super(key: key);
+  const _TakeShotButton({this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +138,7 @@ class _TakeShotButton extends StatelessWidget {
       height: 76,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: NeuroWoodColors.white.withOpacity(0.3),
+        color: NeuroWoodColors.white.withValues(alpha: 0.3),
       ),
       padding: const EdgeInsets.all(8),
       child: InkWell(
@@ -152,7 +147,9 @@ class _TakeShotButton extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: onPressed != null ? NeuroWoodColors.white : NeuroWoodColors.white.withOpacity(0.1),
+              color: onPressed != null
+                  ? NeuroWoodColors.white
+                  : NeuroWoodColors.white.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -165,11 +162,7 @@ class _PanelIconButton extends StatelessWidget {
   final Widget icon;
   final VoidCallback? onPressed;
 
-  const _PanelIconButton({
-    Key? key,
-    required this.icon,
-    required this.onPressed,
-  }) : super(key: key);
+  const _PanelIconButton({required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +172,7 @@ class _PanelIconButton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: NeuroWoodColors.white.withOpacity(0.3),
+          color: NeuroWoodColors.white.withValues(alpha: 0.3),
         ),
         padding: const EdgeInsets.all(12),
         child: icon,

@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mytracker_sdk/mytracker_sdk.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+import 'package:neuro_wood/core/router.dart';
 import 'package:neuro_wood/core/injection.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neuro_wood/core/services/analytics/i_analytics.dart';
@@ -28,7 +28,7 @@ void main() async {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
-        statusBarColor: Colors.white.withAlpha(85),
+        statusBarColor: Colors.white.withValues(alpha: 0.85),
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
@@ -56,10 +56,7 @@ void main() async {
 }
 
 class App extends StatelessWidget {
-  App({super.key});
-  static GlobalKey<NavigatorState> globalKey = GlobalKey<NavigatorState>();
-
-  final _appRouter = AppRouter(globalKey);
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +73,12 @@ class App extends StatelessWidget {
               localizationsDelegates: context.localizationDelegates,
               supportedLocales: context.supportedLocales,
               locale: context.locale,
-              routerDelegate: _appRouter.delegate(),
-              routeInformationParser: _appRouter.defaultRouteParser(),
+              routerConfig: router,
               builder: (context, child) {
                 return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: TextScaler.linear(1.0)),
                   child: child ?? const SizedBox(),
                 );
               },

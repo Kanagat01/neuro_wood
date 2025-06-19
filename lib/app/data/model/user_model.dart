@@ -7,41 +7,30 @@ import 'subscription_business/subscription_business.dart';
 
 class UserModel extends UserEntity {
   UserModel({
-    required String uid,
-    required String name,
-    required String email,
-    required String phone,
-    required String workPhone,
-    required String company,
-    required int recognitionsCount,
-    required double recognitionsVolume,
-    required UserAdditionalModel additional,
-    required SubscriptionModel subscription,
-  }) : super(
-          uid: uid,
-          name: name,
-          email: email,
-          phone: phone,
-          workPhone: workPhone,
-          company: company,
-          recognitionsCount: recognitionsCount,
-          recognitionsVolume: recognitionsVolume,
-          additional: additional,
-          subscription: subscription,
-        );
+    required super.uid,
+    required super.name,
+    required super.email,
+    required super.phone,
+    required super.workPhone,
+    required super.company,
+    required super.recognitionsCount,
+    required super.recognitionsVolume,
+    required UserAdditionalModel super.additional,
+    required SubscriptionModel super.subscription,
+  });
 
   factory UserModel.fromEntity(UserEntity user) => UserModel(
-        uid: user.uid,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        workPhone: user.workPhone,
-        company: user.company,
-        recognitionsCount: user.recognitionsCount,
-        recognitionsVolume: user.recognitionsVolume,
-        additional: UserAdditionalModel.fromEntity(user.additional),
-        subscription: SubscriptionModel.fromEntity(user.subscription),
-      );
+    uid: user.uid,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    workPhone: user.workPhone,
+    company: user.company,
+    recognitionsCount: user.recognitionsCount,
+    recognitionsVolume: user.recognitionsVolume,
+    additional: UserAdditionalModel.fromEntity(user.additional),
+    subscription: SubscriptionModel.fromEntity(user.subscription),
+  );
 
   factory UserModel.fromFirebase({
     required Map<String, dynamic> userMap,
@@ -98,20 +87,13 @@ class UserModel extends UserEntity {
 
 class SubscriptionModel extends SubscriptionEntity {
   SubscriptionModel({
-    required int recognitionLeft,
-    required int recognitionAvailable,
-    required int tariff,
-    DateTime? start,
-    DateTime? end,
-    required bool isFree,
-  }) : super(
-          recognitionLeft: recognitionLeft,
-          recognitionAvailable: recognitionAvailable,
-          tariff: tariff,
-          start: start,
-          end: end,
-          isFree: isFree,
-        );
+    required super.recognitionLeft,
+    required super.recognitionAvailable,
+    required super.tariff,
+    super.start,
+    super.end,
+    required super.isFree,
+  });
 
   factory SubscriptionModel.fromEntity(SubscriptionEntity entity) =>
       SubscriptionModel(

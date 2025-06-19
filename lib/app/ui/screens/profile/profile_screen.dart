@@ -1,10 +1,10 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/ui/screens/auth/bloc/auth_bloc/auth_bloc.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,24 +16,19 @@ import 'widgets/profile_info.dart';
 // import 'package:store_redirect/store_redirect.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   _launch(
     Uri uri,
     Function(BuildContext)? fallback,
     BuildContext context,
   ) async {
-    launchUrl(uri)
-        .then((value) {
-          if (fallback != null && !value) {
-            fallback(context);
-          }
-        })
-        .catchError((_) {
-          if (fallback != null) {
-            fallback(context);
-          }
-        });
+    final shouldFallback = await launchUrl(uri);
+    if (!context.mounted) return;
+
+    if (fallback != null && !shouldFallback) {
+      fallback(context);
+    }
   }
 
   _showLogoutMessage(BuildContext context) {
@@ -53,7 +48,7 @@ class ProfileScreen extends StatelessWidget {
           isDestructiveAction: true,
           onPressed: () {
             context.read<AuthBloc>().add(const AuthEvent.logout());
-            context.router.replaceAll([const AuthScreen()]);
+            context.go('/auth');
           },
         ),
       ],
@@ -77,12 +72,9 @@ class ProfileScreen extends StatelessWidget {
           isDestructiveAction: true,
           onPressed: () {
             context.read<ProfileDeleteCubit>().deleteAccount();
-            context.router.pop();
+            context.pop();
             // context.read<AuthBloc>().add(const AuthEvent.logout());
-
-            // context.router.replaceAll([
-            //   const AuthScreen(),
-            // ]);
+            // context.go('/auth');
           },
         ),
       ],
@@ -106,7 +98,10 @@ class ProfileScreen extends StatelessWidget {
           title: "continueButton".tr(),
           isDestructiveAction: true,
           onPressed: () {
-            context.router.popAndPush(const ReauthScreen());
+            context.pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              context.push('/reauth');
+            });
           },
         ),
       ],
@@ -153,18 +148,17 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<ProfileDeleteCubit, ProfileDeleteState>(
       listener: (context, state) {
-        state.maybeWhen(
-          success: () {
-            context.router.replaceAll([const AuthScreen()]);
-          },
-          needReauth: () {
+        switch (state) {
+          case ProfileDeleteSuccess():
+            context.go('/auth');
+            break;
+          case ProfileDeleteNeedReauth():
             _showNeedReauthMessage(context);
-          },
-          errorDelete: () {
+            break;
+          case ProfileDeleteError():
             _showErrorDeleteMessage(context);
-          },
-          orElse: () {},
-        );
+            break;
+        }
       },
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
@@ -174,22 +168,21 @@ class ProfileScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  state.maybeMap(
-                    hasData: (s) => ProfileInfo(
+                  switch (state) {
+                    ProfileHasData(user: final user) => ProfileInfo(
+                      user: user,
                       changeButtonOnPressed: () async {
-                        dynamic res = await context.router.push(
-                          ProfileEditorScreen(user: s.user),
+                        final res = await context.push(
+                          '/profile-editor',
+                          extra: {'user': user},
                         );
                         if (res == true) {
                           cubit.getData();
                         }
                       },
-                      user: s.user,
                     ),
-                    orElse: () {
-                      return const SizedBox();
-                    },
-                  ),
+                    _ => const SizedBox(),
+                  },
                   const SizedBox(height: 16),
                   const ProfileButtonsBlock(),
                   const SizedBox(height: 16),

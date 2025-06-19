@@ -28,11 +28,11 @@ dependencies:
   rxdart: ^0.28.0
   dartz: ^0.10.1
   #helpers
-  freezed: ^3.0.6
   freezed_annotation: ^3.0.0
   json_serializable: ^6.9.5
+  json_annotation: ^4.9.0
   equatable: ^2.0.7
-  auto_route: ^10.0.1
+  go_router: ^15.2.0
   easy_localization: ^3.0.7+1
   collection: ^1.19.1
   #ui
@@ -48,16 +48,13 @@ dependencies:
   permission_handler: ^12.0.0+1
   camera: ^0.11.1
   image_picker: ^1.1.2
-  pdf_render: ^1.4.12
+  pdfrx: ^1.2.1
   dio: ^5.8.0+1
-  gallery_saver: ^2.3.2
   path_provider: ^2.1.5
   url_launcher: ^6.3.1
-  # sensors_plus: ^6.1.1
+  sensors_plus: ^6.1.1
   store_redirect: ^2.0.4
   wakelock_plus: ^1.3.2
-  aeyrium_sensor:
-    path: ./3rd_party/aeyrium-sensor
   pdf: ^3.11.3
   image: ^4.5.4
   share_plus: ^11.0.0
@@ -66,7 +63,7 @@ dependencies:
   # wakelock_web: ^0.4.0
 
   mytracker_sdk:
-    path: ./3rd_party/mytracker-flutter/
+    path: ./3rd_party/mytracker_sdk-3.1.1/
 
 dev_dependencies:
   flutter_test:
@@ -74,7 +71,7 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
   build_runner: ^2.4.14
-  auto_route_generator: ^10.0.1
+  freezed: ^3.0.6
   flutter_launcher_icons: ^0.14.3
 
 flutter_icons:

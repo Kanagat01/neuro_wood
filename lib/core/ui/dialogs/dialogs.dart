@@ -41,14 +41,10 @@ class Dialogs {
     return showDialog(
       barrierDismissible: barrierDismissible,
       context: context,
-      builder: (ctx) => _DialogBody(
-        title: title,
-        text: text,
-        actions: actions,
-      ),
+      builder: (ctx) => _DialogBody(title: title, text: text, actions: actions),
       // builder: (ctx) => disableBackButton
-      //     ? WillPopScope(
-      //         onWillPop: () => Future.value(false),
+      //     ? PopScope(
+      //         canPop: false,
       //         child: _DialogBody(
       //           title: title,
       //           text: text,
@@ -73,7 +69,7 @@ class Dialogs {
     if (Platform.isIOS) {
       showCupertinoModalPopup<void>(
         context: context,
-        barrierColor: Colors.black.withOpacity(.5),
+        barrierColor: Colors.black.withValues(alpha: 0.5),
         builder: (BuildContext context) => CupertinoActionSheet(
           cancelButton: showCancelButtonIos
               ? CupertinoActionSheetAction(
@@ -86,16 +82,20 @@ class Dialogs {
               : null,
           title: title != null ? Text(title) : null,
           message: text != null ? Text(text) : null,
-          actions: actions
-                  ?.map((e) => CupertinoActionSheetAction(
-                        child: Text(e.title),
-                        onPressed: e is DialogAction
-                            ? e.onPressed
-                            : () => (e as DialogActionWithContext)
-                                .onPressed(context),
-                        isDestructiveAction: e.isDestructiveAction,
-                        isDefaultAction: e.isDefaultAction,
-                      ))
+          actions:
+              actions
+                  ?.map(
+                    (e) => CupertinoActionSheetAction(
+                      onPressed: e is DialogAction
+                          ? e.onPressed
+                          : () => (e as DialogActionWithContext).onPressed(
+                              context,
+                            ),
+                      isDestructiveAction: e.isDestructiveAction,
+                      isDefaultAction: e.isDefaultAction,
+                      child: Text(e.title),
+                    ),
+                  )
                   .toList() ??
               [],
         ),
@@ -104,13 +104,13 @@ class Dialogs {
       final buttonTextStyle = TextStyle(
         fontFamily: 'Roboto',
         fontWeight: FontWeight.w500,
-        color: Colors.black.withOpacity(.5),
+        color: Colors.black.withValues(alpha: .5),
         fontSize: 14,
         height: 1.71,
       );
       showModalBottomSheet(
         context: context,
-        barrierColor: Colors.black.withOpacity(.5),
+        barrierColor: Colors.black.withValues(alpha: .5),
         builder: (context) {
           return Wrap(
             children: [
@@ -142,61 +142,62 @@ class Dialogs {
                                 fontFamily: 'Roboto',
                                 fontSize: 14,
                                 height: 1.43,
-                                color: Colors.black.withOpacity(.6),
+                                color: Colors.black.withValues(alpha: .6),
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
                         ],
                       ),
                     ),
-                    const Divider(
-                      height: 1,
-                      thickness: 1,
-                    ),
+                    const Divider(height: 1, thickness: 1),
                   ],
                   ...actions
                           ?.map(
                             (e) => TextButton(
                               style: ButtonStyle(
-                                padding: MaterialStateProperty.resolveWith<
-                                    EdgeInsetsGeometry>(
-                                  (_) => const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 16,
-                                  ),
-                                ),
-                                overlayColor:
-                                    MaterialStateProperty.resolveWith((state) {
-                                  if (state.contains(MaterialState.pressed)) {
-                                    return const Color(0xFFBB86FC)
-                                        .withOpacity(.12);
+                                padding:
+                                    WidgetStateProperty.resolveWith<
+                                      EdgeInsetsGeometry
+                                    >(
+                                      (_) => const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                        horizontal: 16,
+                                      ),
+                                    ),
+                                overlayColor: WidgetStateProperty.resolveWith((
+                                  state,
+                                ) {
+                                  if (state.contains(WidgetState.pressed)) {
+                                    return const Color(
+                                      0xFFBB86FC,
+                                    ).withValues(alpha: .12);
                                   }
-                                  return Colors.black.withOpacity(.6);
+                                  return Colors.black.withValues(alpha: .6);
                                 }),
                                 foregroundColor:
-                                    MaterialStateProperty.resolveWith((state) {
-                                  if (state.contains(MaterialState.pressed)) {
-                                    return const Color(0xFF6200EE);
-                                  }
-                                  return Colors.black.withOpacity(.6);
-                                }),
-                                textStyle: MaterialStateProperty.resolveWith<
-                                    TextStyle>((state) {
-                                  return buttonTextStyle;
-                                }),
+                                    WidgetStateProperty.resolveWith((state) {
+                                      if (state.contains(WidgetState.pressed)) {
+                                        return const Color(0xFF6200EE);
+                                      }
+                                      return Colors.black.withValues(alpha: .6);
+                                    }),
+                                textStyle:
+                                    WidgetStateProperty.resolveWith<TextStyle>((
+                                      state,
+                                    ) {
+                                      return buttonTextStyle;
+                                    }),
                                 alignment: Alignment.centerLeft,
-                              ),
-                              child: Text(
-                                e.title,
                               ),
                               onPressed: e is DialogAction
                                   ? e.onPressed
                                   : () => (e as DialogActionWithContext)
-                                      .onPressed(context),
+                                        .onPressed(context),
+                              child: Text(e.title),
                             ),
                           )
                           .toList() ??
-                      []
+                      [],
                 ],
               ),
             ],
@@ -211,12 +212,7 @@ class _DialogBody extends StatelessWidget {
   final String? title;
   final String? text;
   final List<BaseDialogAction>? actions;
-  const _DialogBody({
-    Key? key,
-    this.title,
-    this.text,
-    required this.actions,
-  }) : super(key: key);
+  const _DialogBody({this.title, this.text, required this.actions});
 
   @override
   Widget build(BuildContext context) {
@@ -224,16 +220,19 @@ class _DialogBody extends StatelessWidget {
       return CupertinoAlertDialog(
         title: title != null ? Text(title!) : null,
         content: text != null ? Text(text!) : null,
-        actions: actions
-                ?.map((e) => CupertinoDialogAction(
-                      child: Text(e.title),
-                      onPressed: e is DialogAction
-                          ? e.onPressed
-                          : () =>
+        actions:
+            actions
+                ?.map(
+                  (e) => CupertinoDialogAction(
+                    onPressed: e is DialogAction
+                        ? e.onPressed
+                        : () =>
                               (e as DialogActionWithContext).onPressed(context),
-                      isDestructiveAction: e.isDestructiveAction,
-                      isDefaultAction: e.isDefaultAction,
-                    ))
+                    isDestructiveAction: e.isDestructiveAction,
+                    isDefaultAction: e.isDefaultAction,
+                    child: Text(e.title),
+                  ),
+                )
                 .toList() ??
             [],
       );
@@ -259,25 +258,30 @@ class _DialogBody extends StatelessWidget {
                   fontSize: 14,
                   height: 1.43,
                   fontWeight: FontWeight.w400,
-                  color: Colors.black.withOpacity(.6),
+                  color: Colors.black.withValues(alpha: .6),
                 ),
               )
             : null,
-        actions: actions
-                ?.map((e) => TextButton(
-                      style: TextButton.styleFrom(
-                          primary: const Color(0xFF6200EE),
-                          textStyle: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Roboto',
-                              letterSpacing: 1.25)),
-                      onPressed: e is DialogAction
-                          ? e.onPressed
-                          : () =>
+        actions:
+            actions
+                ?.map(
+                  (e) => TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF6200EE),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Roboto',
+                        letterSpacing: 1.25,
+                      ),
+                    ),
+                    onPressed: e is DialogAction
+                        ? e.onPressed
+                        : () =>
                               (e as DialogActionWithContext).onPressed(context),
-                      child: Text(e.title.toUpperCase()),
-                    ))
+                    child: Text(e.title.toUpperCase()),
+                  ),
+                )
                 .toList() ??
             [],
       );

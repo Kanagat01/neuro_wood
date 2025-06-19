@@ -9,14 +9,14 @@ class HowItWorkButton extends StatelessWidget {
   final double width;
   final double height;
   const HowItWorkButton({
-    Key? key,
+    super.key,
     required this.backgroundGradient,
     required this.backgroundImage,
     required this.title,
     required this.onPressed,
     required this.width,
     required this.height,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +51,10 @@ class HowItWorkButton extends StatelessWidget {
                 child: Ink(
                   width: width,
                   height: height,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 10,
+                  ),
                   child: Text(
                     title,
                     style: const TextStyle(

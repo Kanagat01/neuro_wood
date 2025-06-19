@@ -1,5 +1,4 @@
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 
 class NetworkRequest {
   final List<String> baseUrl;
@@ -21,13 +20,13 @@ class NetworkRequest {
   bool get hasNextUrl => baseUrl.length > 1;
 
   NetworkRequest nextUrl() => NetworkRequest(
-        path: path,
-        baseUrl: baseUrl.sublist(1),
-        method: method,
-        queryParams: queryParams,
-        body: body,
-        file: file,
-      );
+    path: path,
+    baseUrl: baseUrl.sublist(1),
+    method: method,
+    queryParams: queryParams,
+    body: body,
+    file: file,
+  );
 }
 
 extension NetworkRequestLogging on NetworkRequest {
@@ -35,7 +34,7 @@ extension NetworkRequestLogging on NetworkRequest {
     return '''NetworkRequest:
   baseUrl: $baseUrl,
   path: $path,
-  method: ${describeEnum(method)},
+  method: ${method.name},
   queryParams: $queryParams,
   body: $body,
   filePath: ${file?.path},

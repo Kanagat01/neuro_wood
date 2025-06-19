@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -55,18 +55,38 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
   }) : super(const CameraState.initialize()) {
     WidgetsBinding.instance.addObserver(this);
     on<CameraEvent>((event, emit) async {
-      await event.map(
-        initCamera: (e) => _initCamera(e, emit),
-        takePhoto: (e) => _takePhoto(e, emit),
-        pickImage: (e) => _pickImage(e, emit),
-        send: (e) => _send(e, emit),
-        onViewFinderTap: (e) => _onViewFinderTap(e, emit),
-        interrupt: (e) => _interrupt(e, emit),
-        dispose: (e) => _dispose(e, emit),
-        cameraControllerEvent: (e) => _cameraControllerEvent(e, emit),
-        changeAllowTakePhoto: (e) => _changeAllowTakePhoto(e, emit),
-        onSettingsTap: (e) => _onSettingsTap(e, emit),
-      );
+      switch (event) {
+        case final InitCamera e:
+          _initCamera(e, emit);
+          break;
+        case final TakePhoto e:
+          _takePhoto(e, emit);
+          break;
+        case final PickImage e:
+          await _pickImage(e, emit);
+          break;
+        case final CameraSend e:
+          await _send(e, emit);
+          break;
+        case final CameraOnViewFinderTap e:
+          _onViewFinderTap(e, emit);
+          break;
+        case final InterruptCamera e:
+          _interrupt(e, emit);
+          break;
+        case final DisposeCamera e:
+          _dispose(e, emit);
+          break;
+        case final CameraEventController e:
+          _cameraControllerEvent(e, emit);
+          break;
+        case final ChangeAllowTakePhoto e:
+          _changeAllowTakePhoto(e, emit);
+          break;
+        case final CameraOnSettingsTap e:
+          _onSettingsTap(e, emit);
+          break;
+      }
     });
     ccsSubs = _cameraControllerBloc.stream.listen((camState) {
       log('cameraContorller $camState');
@@ -76,33 +96,31 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
     });
   }
 
-  _onSettingsTap(_OnSettingsTap event, Emitter<CameraState> emit) {
+  _onSettingsTap(CameraOnSettingsTap event, Emitter<CameraState> emit) {
     emit(const CameraState.empty());
     permissions.openSetting().then(
       (value) => _cameraControllerBloc.openedSettings = value,
     );
   }
 
-  _changeAllowTakePhoto(
-    _ChangeAllowTakePhoto event,
-    Emitter<CameraState> emit,
-  ) {
-    state.maybeMap(
-      ready: (value) => emit(CameraState.ready(event.stream)),
-      orElse: () {},
-    );
+  _changeAllowTakePhoto(ChangeAllowTakePhoto event, Emitter<CameraState> emit) {
+    switch (state) {
+      case CameraReady(:final inclineStream):
+        emit(CameraState.ready(inclineStream));
+        break;
+    }
   }
 
-  _initCamera(_InitCamera event, Emitter<CameraState> emit) {
+  _initCamera(InitCamera event, Emitter<CameraState> emit) {
     _type = event.type;
     _cameraControllerBloc.add(const CameraControllerEvent.init());
   }
 
-  _takePhoto(_TakePhoto event, Emitter<CameraState> emit) {
+  _takePhoto(TakePhoto event, Emitter<CameraState> emit) {
     _cameraControllerBloc.add(const CameraControllerEvent.takePhoto());
   }
 
-  _pickImage(_PickImage event, Emitter<CameraState> emit) async {
+  _pickImage(PickImage event, Emitter<CameraState> emit) async {
     _openPicker = true;
     WakelockPlus.disable();
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -114,9 +132,9 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
     }
   }
 
-  _send(_Send event, Emitter<CameraState> emit) async {
-    if (state is! _HasImage) return;
-    _HasImage s = (state as _HasImage);
+  _send(CameraSend event, Emitter<CameraState> emit) async {
+    if (state is! CameraHasImage) return;
+    CameraHasImage s = (state as CameraHasImage);
     measureRequestBuilder.image = s.substate.image;
     measureRequestBuilder.type = _type;
     _startPreloader();
@@ -150,13 +168,13 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
     );
   }
 
-  _onViewFinderTap(_OnViewFinderTap event, Emitter<CameraState> emit) {
+  _onViewFinderTap(CameraOnViewFinderTap event, Emitter<CameraState> emit) {
     _cameraControllerBloc.add(
       CameraControllerEvent.onViewFinderTap(event.offset),
     );
   }
 
-  _interrupt(_Interrupt event, Emitter<CameraState> emit) {
+  _interrupt(InterruptCamera event, Emitter<CameraState> emit) {
     _openPicker = false;
     // WakelockPlus.enable();
     _cameraControllerBloc.add(const CameraControllerEvent.init());
@@ -176,7 +194,7 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
     super.close();
   }
 
-  _dispose(_Dispose event, Emitter<CameraState> emit) {
+  _dispose(DisposeCamera event, Emitter<CameraState> emit) {
     _cameraControllerBloc.add(const CameraControllerEvent.disposeCamera());
     WidgetsBinding.instance.removeObserver(this);
     ccsSubs?.cancel();
@@ -189,48 +207,46 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
   }
 
   _cameraControllerEvent(
-    _CameraControllerEvent event,
+    CameraEventController event,
     Emitter<CameraState> emit,
   ) {
-    event.ccState.maybeMap(
-      initial: (s) {
-        if (state is! _HasImage) {
+    switch (event.ccState) {
+      case CameraControllerInitial():
+        if (state is! CameraHasImage) {
           emit(const CameraState.empty());
         }
-      },
-      ready: (s) {
-        // log('CAMERA Ready');
+        break;
+      case CameraControllerReady():
         emit(const CameraState.ready());
         WakelockPlus.enable();
         _streamSubscription?.cancel();
         sensor.play();
         _streamSubscription = sensor.stream.listen((e) {
-          // log('INCLINE: $e');
-          state.maybeMap(
-            ready: (s) {
-              if (s.inclineStream == null && !e.isAllowable) {
+          switch (state) {
+            case CameraReady(:final inclineStream):
+              if (inclineStream == null && !e.isAllowable) {
                 add(CameraEvent.changeAllowTakePhoto(sensor.stream));
-              } else if (s.inclineStream != null && e.isAllowable) {
+              } else if (inclineStream != null && e.isAllowable) {
                 add(const CameraEvent.changeAllowTakePhoto());
               }
-            },
-            orElse: () {},
-          );
+              break;
+          }
         });
-      },
-      takedPhoto: (s) {
-        emit(CameraState.hasImage(HasImageSubState(s.photo)));
+        break;
+      case CameraControllerTakedPhoto(photo: final photo):
+        emit(CameraState.hasImage(HasImageSubState(photo)));
         sensor.pause();
         WakelockPlus.disable();
         _streamSubscription?.cancel();
         _cameraControllerBloc.add(const CameraControllerEvent.disposeCamera());
-      },
-      error: (s) {
+        break;
+      case CameraControllerError():
         emit(const CameraState.errorInit());
         WakelockPlus.disable();
-      },
-      orElse: () {},
-    );
+        break;
+      default:
+        break;
+    }
   }
 
   void logError(String code, String? message) {
@@ -250,7 +266,8 @@ class CameraBloc extends Bloc<CameraEvent, CameraState>
       WakelockPlus.disable();
       sensor.pause();
     } else if (state == AppLifecycleState.resumed &&
-        ((this.state is _Empty && !_openPicker) || this.state is _ErrorInit)) {
+        ((this.state is EmptyCamera && !_openPicker) ||
+            this.state is CameraErrorInit)) {
       await Future.delayed(const Duration(milliseconds: 500));
       _cameraControllerBloc.add(const CameraControllerEvent.reinit());
     }

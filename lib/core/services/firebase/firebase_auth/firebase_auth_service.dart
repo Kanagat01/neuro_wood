@@ -47,7 +47,9 @@ class FirebaseAuthService {
         verificationId: _verificationId,
         smsCode: code,
       );
-      final _ = await _fa.currentUser!.reauthenticateWithCredential(authCredential);
+      final _ = await _fa.currentUser!.reauthenticateWithCredential(
+        authCredential,
+      );
       return const Right(true);
     } on FirebaseAuthException catch (e) {
       log(e.toString());
@@ -71,23 +73,25 @@ class FirebaseAuthService {
   Future<FASState> signInWithPhone(String phoneNumber) async {
     try {
       // StreamController<FASState>? _sc = StreamController<FASState>();
-      Completer<FASState> _comp = Completer<FASState>();
+      Completer<FASState> comp = Completer<FASState>();
       _fa.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (AuthCredential authCredential) {
           log("phone verified : Token ${authCredential.token}");
           // _streamSink?.add(const FASState.phoneVerificationCompleted());
           // _sc?.sink.add(const FASState.phoneVerificationCompleted());
-          if (!_comp.isCompleted) {
-            _comp.complete(const FASState.phoneVerificationCompleted());
+          if (!comp.isCompleted) {
+            comp.complete(const FASState.phoneVerificationCompleted());
           }
         },
         verificationFailed: (FirebaseAuthException e) {
           log("phone failed : ${e.message},${e.code}");
           // _streamSink?.add(FASState.phoneVerificationError(code: e.code, message: e.message));
           // _sc?.sink.add(FASState.phoneVerificationError(code: e.code, message: e.message));
-          if (!_comp.isCompleted) {
-            _comp.complete(FASState.phoneVerificationError(code: e.code, message: e.message));
+          if (!comp.isCompleted) {
+            comp.complete(
+              FASState.phoneVerificationError(code: e.code, message: e.message),
+            );
           }
         },
         timeout: const Duration(seconds: 30),
@@ -97,16 +101,21 @@ class FirebaseAuthService {
           // _sc?.sink.add(const FASState.phoneVerificationCompleted());
           _resendToken = forceResendingToken;
           _verificationId = verificationId;
-          if (!_comp.isCompleted) {
-            _comp.complete(const FASState.phoneVerificationCompleted());
+          if (!comp.isCompleted) {
+            comp.complete(const FASState.phoneVerificationCompleted());
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
           //  _streamSink?.add(const FASState.phoneVerificationError(code: '0', message: 'TIMEOUT'));
           // _sc?.sink.add(const FASState.phoneVerificationError(code: '0', message: 'TIMEOUT'));
-          if (!_comp.isCompleted) {
-            _comp.complete(const FASState.phoneVerificationError(code: '0', message: 'TIMEOUT'));
+          if (!comp.isCompleted) {
+            comp.complete(
+              const FASState.phoneVerificationError(
+                code: '0',
+                message: 'TIMEOUT',
+              ),
+            );
           }
 
           log("time out :$verificationId");
@@ -115,10 +124,10 @@ class FirebaseAuthService {
       // FASState res = await _sc.stream.first;
       // _sc.close();
       // _sc = null;
-      final s = await _comp.future;
+      final s = await comp.future;
       return s;
     } catch (e) {
-      log('FIREBASE AUTH exc: '+e.toString());
+      log('FIREBASE AUTH exc: $e');
       return const FASState.phoneVerificationError(code: '0');
     }
   }
@@ -151,7 +160,9 @@ class FirebaseAuthService {
       },
       verificationFailed: (FirebaseAuthException e) {
         log("phone failed : ${e.message},${e.code}");
-        _streamSink?.add(FASState.phoneVerificationError(code: e.code, message: e.message));
+        _streamSink?.add(
+          FASState.phoneVerificationError(code: e.code, message: e.message),
+        );
       },
       forceResendingToken: _resendToken,
       timeout: const Duration(seconds: 30),

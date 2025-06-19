@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:extended_masked_text/extended_masked_text.dart';
 import 'package:flutter/material.dart';
@@ -14,48 +14,49 @@ part 'profile_editor_state.dart';
 part 'profile_editor_bloc.freezed.dart';
 
 class ProfileEditorBloc extends Bloc<ProfileEditorEvent, ProfileEditorState> {
-  final _InputWrapper name = _InputWrapper(
+  final ProfileEditorInput name = ProfileEditorInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: TextEditingController(),
     focusNode: FocusNode(),
     isValid: true,
   );
-  final _InputWrapper phone = _InputWrapper(
+  final ProfileEditorInput phone = ProfileEditorInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: MaskedTextController(mask: '000 000 00 00'),
     focusNode: FocusNode(),
     isValid: true,
   );
-  final _InputWrapper company = _InputWrapper(
+  final ProfileEditorInput company = ProfileEditorInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: TextEditingController(),
     focusNode: FocusNode(),
     isValid: true,
   );
-  final _InputWrapper email = _InputWrapper(
+  final ProfileEditorInput email = ProfileEditorInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: TextEditingController(),
     focusNode: FocusNode(),
     isValid: true,
   );
 
-  late List<_InputWrapper> _wrappers;
+  late List<ProfileEditorInput> _wrappers;
   TextEditingController get nameController => name.controller;
   TextEditingController get companyController => company.controller;
   TextEditingController get phoneController => phone.controller;
   TextEditingController get emailController => email.controller;
-  final ToggleCubit isActiveBtn =
-      getIt.get<ToggleCubit>(param1: false, param2: null);
+  final ToggleCubit isActiveBtn = getIt.get<ToggleCubit>(
+    param1: false,
+    param2: null,
+  );
 
   final RegExp emailRegexp = RegExp(
-      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
+    r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
+  );
 
   final IUserRepository userRepository;
   final UserEntity user;
-  ProfileEditorBloc({
-    required this.userRepository,
-    required this.user,
-  }) : super(const _Initial()) {
+  ProfileEditorBloc({required this.userRepository, required this.user})
+    : super(const ProfileEditorInitial()) {
     on<_Save>(_save);
     name.oldValue = user.name;
     nameController.addListener(_nameListener);
@@ -65,12 +66,7 @@ class ProfileEditorBloc extends Bloc<ProfileEditorEvent, ProfileEditorState> {
     phoneController.addListener(_phoneListener);
     email.oldValue = user.email;
     emailController.addListener(_emailListener);
-    _wrappers = [
-      name,
-      phone,
-      company,
-      email,
-    ];
+    _wrappers = [name, phone, company, email];
 
     for (var e in _wrappers) {
       e.focusNode.addListener(() {
@@ -180,7 +176,7 @@ class ProfileEditorBloc extends Bloc<ProfileEditorEvent, ProfileEditorState> {
   }
 }
 
-class _InputWrapper {
+class ProfileEditorInput {
   final TextEditingController controller;
   final FocusNode focusNode;
   bool isCheckedKeyboard = false;
@@ -197,7 +193,7 @@ class _InputWrapper {
 
   String get oldValue => _oldValue;
 
-  _InputWrapper({
+  ProfileEditorInput({
     required this.controller,
     required this.focusNode,
     required this.enableValidate,

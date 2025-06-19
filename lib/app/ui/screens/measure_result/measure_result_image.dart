@@ -1,8 +1,8 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/domain/entities/measure_result_image_entity.dart';
 import 'package:neuro_wood/app/ui/widgets/leading_button.dart';
 import 'package:neuro_wood/core/injection.dart';
@@ -17,10 +17,7 @@ import 'widgets/export_overlay.dart';
 class MeasureResultImage extends StatelessWidget {
   final MeasureResultImageEntity result;
 
-  const MeasureResultImage({
-    Key? key,
-    required this.result,
-  }) : super(key: key);
+  const MeasureResultImage({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
@@ -31,41 +28,41 @@ class MeasureResultImage extends StatelessWidget {
     return BlocConsumer<ImageExporterCubit, ImageExporterState>(
       bloc: bloc,
       listener: (context, state) {
-        state.maybeMap(
-          error: (e) {
-            if (e.type == ErrorType.permission) {
+        switch (state) {
+          case ImageExporterError(:final type):
+            if (type == ErrorType.permission) {
               _showNoAccessStorageDialog(
                 context: context,
                 onCancelTap: () {
-                  context.router.pop();
+                  context.pop();
                 },
                 onSettingsTap: () async {
                   await bloc.openSettings();
-                  context.router.pop();
+                  if (context.mounted) {
+                    context.pop();
+                  }
                 },
               );
-            } else if (e.type == ErrorType.undefined) {
-              _showDialog(
-                context: context,
-                type: _DialogType.error,
-              );
+            } else if (type == ErrorType.undefined) {
+              _showDialog(context: context, type: _DialogType.error);
             }
-          },
-          success: (s) {
+            break;
+          case ImageExporterSuccess(:final oneImage):
             _showDialog(
               context: context,
-              type: s.oneImage == false ? _DialogType.successMany : _DialogType.success,
+              type: oneImage == false
+                  ? _DialogType.successMany
+                  : _DialogType.success,
             );
-          },
-          orElse: () {},
-        );
+            break;
+        }
       },
       builder: (context, state) {
         return ExportOverlay(
-          enabled: state.maybeMap(
-            orElse: () => false,
-            proccessing: (_) => true,
-          ),
+          enabled: switch (state) {
+            ImageExporterProcessing() => true,
+            _ => false,
+          },
           child: Scaffold(
             backgroundColor: Colors.black,
             appBar: AppBar(
@@ -79,9 +76,7 @@ class MeasureResultImage extends StatelessWidget {
                 statusBarIconBrightness: Brightness.light,
                 statusBarBrightness: Brightness.dark,
               ),
-              leading: const LeadingButton(
-                isBlack: false,
-              ),
+              leading: const LeadingButton(isBlack: false),
               actions: [
                 IconButton(
                   onPressed: () {
@@ -97,7 +92,9 @@ class MeasureResultImage extends StatelessWidget {
                           },
                         ),
                         DialogAction(
-                          title: "downloadAllPhoto".tr(args: ['${result.items.length}']),
+                          title: "downloadAllPhoto".tr(
+                            args: ['${result.items.length}'],
+                          ),
                           onPressed: () {
                             bloc.exportAll();
                             Navigator.of(context).pop();
@@ -109,7 +106,7 @@ class MeasureResultImage extends StatelessWidget {
                   icon: const Icon(NeuroWoodIcons.download),
                   color: NeuroWoodColors.white,
                   splashRadius: 24,
-                )
+                ),
               ],
             ),
             body: InteractiveViewer(
@@ -117,7 +114,8 @@ class MeasureResultImage extends StatelessWidget {
               maxScale: 4,
               child: RepaintBoundary(
                 child: CustomPaint(
-                  foregroundPainter: result.items[result.selected].foregroundPainter,
+                  foregroundPainter:
+                      result.items[result.selected].foregroundPainter,
                   child: SizedBox(
                     width: result.imageInfo.image.width.toDouble(),
                     height: result.imageInfo.image.height.toDouble(),
@@ -131,10 +129,7 @@ class MeasureResultImage extends StatelessWidget {
     );
   }
 
-  _showDialog({
-    required BuildContext context,
-    required _DialogType type,
-  }) {
+  _showDialog({required BuildContext context, required _DialogType type}) {
     String title;
     String text;
     switch (type) {
@@ -178,10 +173,7 @@ class MeasureResultImage extends StatelessWidget {
       title: "noStorageAccessTitle".tr(),
       text: "noStorageAccessMessage".tr(),
       actions: [
-        DialogAction(
-          onPressed: onCancelTap,
-          title: "cancelButton".tr(),
-        ),
+        DialogAction(onPressed: onCancelTap, title: "cancelButton".tr()),
         DialogAction(
           onPressed: onSettingsTap,
           title: "goToSettingsButton".tr(),
@@ -195,8 +187,4 @@ class MeasureResultImage extends StatelessWidget {
   }
 }
 
-enum _DialogType {
-  error,
-  success,
-  successMany,
-}
+enum _DialogType { error, success, successMany }

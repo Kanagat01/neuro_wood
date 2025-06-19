@@ -1,34 +1,45 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/ui/screens/auth/bloc/auth_bloc/auth_bloc.dart';
 import 'package:neuro_wood/app/ui/widgets/rotating_logo.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class SplashScreen extends StatelessWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        state.maybeWhen(
-          inputPhone: (_, __, ___) async {
-            await Future.delayed(const Duration(seconds: 3));
-            context.router.replace(const AuthScreen());
-          },
-          successAuth: () async {
-            await Future.delayed(const Duration(seconds: 3));
-            context.router.replace(const RegisterScreen());
-          },
-          successRegister: () async {
-            await Future.delayed(const Duration(seconds: 3));
-            context.router.replace(const BottomNavigator());
-          },
-          orElse: () {},
-        );
+        switch (state) {
+          case AuthInputPhone():
+            () async {
+              await Future.delayed(const Duration(seconds: 3));
+              if (context.mounted) {
+                context.push('/auth');
+              }
+            }();
+            break;
+          case SuccessAuth():
+            () async {
+              await Future.delayed(const Duration(seconds: 3));
+              if (context.mounted) {
+                context.replace('/register');
+              }
+            }();
+            break;
+          case SuccessRegister():
+            () async {
+              await Future.delayed(const Duration(seconds: 3));
+              if (context.mounted) {
+                context.replace('/main');
+              }
+            }();
+            break;
+        }
       },
       child: Scaffold(
         body: SafeArea(

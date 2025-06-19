@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MultiSelectorDictionaryCubit<T> extends Cubit<List<T>?> {
-  MultiSelectorDictionaryCubit(List<T>? value) : super(value);
+  MultiSelectorDictionaryCubit(super.value);
 
   toggle(T? value) {
     final List<T> newState = List.from(state ?? []);

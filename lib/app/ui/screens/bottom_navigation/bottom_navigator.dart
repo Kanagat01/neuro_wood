@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:auto_route/auto_route.dart';
+import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +12,7 @@ import 'package:neuro_wood/app/ui/screens/measurements/cubit/measurements_cubit.
 import 'package:neuro_wood/app/ui/screens/profile/bloc/cubit/profile_delete_cubit.dart';
 import 'package:neuro_wood/app/ui/screens/profile/bloc/profile_cubit/profile_cubit.dart';
 import 'package:neuro_wood/core/injection.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
@@ -25,7 +25,8 @@ import 'widgets/grabbing_widget.dart';
 import 'widgets/how_it_work_button.dart';
 
 class BottomNavigator extends StatefulWidget {
-  const BottomNavigator({super.key});
+  final Widget child;
+  const BottomNavigator({super.key, required this.child});
 
   @override
   State<BottomNavigator> createState() => _BottomNavigatorState();
@@ -34,26 +35,7 @@ class BottomNavigator extends StatefulWidget {
 enum _DragState { initial, initialDraggable, awaitDrag, disable }
 
 class _BottomNavigatorState extends State<BottomNavigator> {
-  final List<BottomNavigationButtonEntity> _routes = [
-    BottomNavigationButtonEntity(
-      title: "measurementsButton".tr(),
-      icon: 'ruler',
-      index: _RoutesIndexes.measurements.index,
-      route: const MeasurementsScreen(),
-    ),
-    BottomNavigationButtonEntity(
-      title: "measureButton".tr(),
-      icon: 'camera',
-      index: _RoutesIndexes.measure.index,
-      route: const MainScreen(),
-    ),
-    BottomNavigationButtonEntity(
-      title: "profileButton".tr(),
-      icon: 'profile',
-      index: _RoutesIndexes.profile.index,
-      route: const ProfileScreen(),
-    ),
-  ];
+  late final List<BottomNavigationButtonEntity> _routes;
 
   bool wasEntranceOnboarding = false;
 
@@ -62,6 +44,40 @@ class _BottomNavigatorState extends State<BottomNavigator> {
     _RoutesIndexes.measure: true,
     _RoutesIndexes.profile: false,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _routes = [
+      BottomNavigationButtonEntity(
+        title: "measurementsButton".tr(),
+        icon: 'ruler',
+        index: _RoutesIndexes.measurements.index,
+        route: '/measurements',
+      ),
+      BottomNavigationButtonEntity(
+        title: "measureButton".tr(),
+        icon: 'camera',
+        index: _RoutesIndexes.measure.index,
+        route: '/main',
+      ),
+      BottomNavigationButtonEntity(
+        title: "profileButton".tr(),
+        icon: 'profile',
+        index: _RoutesIndexes.profile.index,
+        route: '/profile',
+      ),
+    ];
+    getIt.get<MeasureLimitCubit>().fetch();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (runAfterBuild != null) {
+        Future.delayed(const Duration(seconds: 1), () {
+          runAfterBuild!();
+          runAfterBuild = null;
+        });
+      }
+    });
+  }
 
   _checkLoaded(_RoutesIndexes index, BuildContext context) {
     if (_loaded[index]!) {
@@ -85,32 +101,11 @@ class _BottomNavigatorState extends State<BottomNavigator> {
   Function? runAfterBuild;
 
   @override
-  void initState() {
-    super.initState();
-    getIt.get<MeasureLimitCubit>().fetch();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (runAfterBuild != null) {
-        Future.delayed(const Duration(seconds: 1), () {
-          runAfterBuild!();
-          runAfterBuild = null;
-        });
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // final paddingCubit = PaddingNotifierCubit(100);
     final double pb = MediaQuery.of(context).viewPadding.bottom;
     final double padBot = pb > 0 && Platform.isIOS ? pb - 20 : pb;
 
     final List<SnappingPosition> snappingPositions = [
-      // SnappingPosition.pixels(
-      //   positionPixels: 40,
-      //   snappingCurve: Curves.easeOutExpo,
-      //   snappingDuration: Duration(milliseconds: 250),
-      //   grabbingContentOffset: GrabbingContentOffset.top,
-      // ),
       SnappingPosition.pixels(
         positionPixels: 100 + padBot,
         grabbingContentOffset: GrabbingContentOffset.top,
@@ -124,9 +119,15 @@ class _BottomNavigatorState extends State<BottomNavigator> {
         snappingDuration: const Duration(milliseconds: 250),
       ),
     ];
+
+    // Определяем активный индекс по текущему location
+    final String location = GoRouterState.of(context).uri.toString();
+    int activeIndex = _routes.indexWhere((e) => location.startsWith(e.route));
+    if (activeIndex == -1) activeIndex = 1; // fallback на main
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.white.withAlpha(85),
+        statusBarColor: Colors.white.withAlpha((0.85 * 255).toInt()),
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
@@ -144,212 +145,190 @@ class _BottomNavigatorState extends State<BottomNavigator> {
             if (!mainScreenCubit.showOnboarding && !wasEntranceOnboarding) {
               wasEntranceOnboarding = true;
               mainScreenCubit.setShowedOnboarding();
-              runAfterBuild = () =>
-                  context.router.push(const OnboardingScreen());
-              // WidgetsBinding.instance?.addPostFrameCallback((_) {
-              //   log("GO TO ONBOARDING");
-              //   context.router.push(const OnboardingScreen());
-              // });
+              runAfterBuild = () => context.push('/onboarding');
             }
+
+            _checkLoaded(_RoutesIndexes.values[activeIndex], context);
+
+            double mainWidth = MediaQuery.of(context).size.width - 32;
+            if (mainWidth > 343) {
+              mainWidth = 343;
+            }
+            final double howItWorkWidth = (mainWidth - 24) / 3;
+            const howItWorkheight = 115.0;
+
             return Material(
               color: NeuroWoodColors.white,
-              child: AutoTabsRouter(
-                lazyLoad: true,
-                duration: const Duration(milliseconds: 250),
-                homeIndex: 1,
-                builder: (context, child, animation) {
-                  final tabsRouter = AutoTabsRouter.of(context);
-                  _checkLoaded(
-                    _RoutesIndexes.values[tabsRouter.activeIndex],
-                    context,
-                  );
-                  double mainWidth = MediaQuery.of(context).size.width - 32;
-                  if (mainWidth > 343) {
-                    mainWidth = 343;
+              child: SnappingSheet(
+                controller: SnappingSheetController(),
+                lockOverflowDrag: true,
+                onSheetMoved: (d) {
+                  context.read<PaddingNotifierCubit>().set(d.pixels - pb - 12);
+                  if (dragState == _DragState.awaitDrag) {
+                    context.read<MainScreenCubit>().setShowedPullUp();
+                    dragState = _DragState.disable;
+                  } else if (dragState == _DragState.initialDraggable) {
+                    dragState = _DragState.awaitDrag;
                   }
-                  final double howItWorkWidth = (mainWidth - 24) / 3;
-                  const howItWorkheight = 115.0;
-
-                  return SnappingSheet(
-                    controller: SnappingSheetController(),
-                    child: FadeTransition(
-                      opacity: animation,
-                      child: BlocBuilder<PaddingNotifierCubit, double>(
-                        builder: (context, state) {
-                          final Widget body = Padding(
-                            padding: EdgeInsets.only(bottom: state),
-                            child: child,
-                          );
-
-                          if (!mainScreenCubit.showPullUp.state &&
-                              dragState == _DragState.initial) {
-                            dragState = _DragState.initialDraggable;
-                          } else if (mainScreenCubit.showPullUp.state &&
-                              dragState == _DragState.initial) {
-                            dragState = _DragState.disable;
-                          }
-
-                          if (tabsRouter.activeIndex == 1 &&
-                              !mainScreenCubit.showPullUp.state) {
-                            return Stack(
-                              children: [
-                                body,
-                                _PullUp(bottom: state + pb),
-                              ],
-                            );
-                          }
-                          return body;
-                        },
+                },
+                initialSnappingPosition: snappingPositions[0],
+                snappingPositions: snappingPositions,
+                grabbing: const GrabbingWidget(),
+                grabbingHeight: 12,
+                sheetAbove: null,
+                sheetBelow: SnappingSheetContent(
+                  sizeBehavior: SheetSizeStatic(size: 300 + pb * 2),
+                  draggable: true,
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
                       ),
-                    ),
-                    lockOverflowDrag: true,
-                    onSheetMoved: (d) {
-                      context.read<PaddingNotifierCubit>().set(
-                        d.pixels - pb - 12,
-                      );
-                      if (dragState == _DragState.awaitDrag) {
-                        context.read<MainScreenCubit>().setShowedPullUp();
-                        dragState = _DragState.disable;
-                      } else if (dragState == _DragState.initialDraggable) {
-                        dragState = _DragState.awaitDrag;
-                      }
-                    },
-                    initialSnappingPosition: snappingPositions[0],
-                    snappingPositions: snappingPositions,
-                    grabbing: const GrabbingWidget(),
-                    grabbingHeight: 12,
-                    sheetAbove: null,
-                    sheetBelow: SnappingSheetContent(
-                      sizeBehavior: SheetSizeStatic(size: 300 + pb * 2),
-                      draggable: true,
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 12,
-                              color: Colors.black.withAlpha(10),
-                              spreadRadius: 4,
-                            ),
-                          ],
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 12,
+                          color: Colors.black.withAlpha((0.1 * 255).toInt()),
+                          spreadRadius: 4,
                         ),
-                        padding: EdgeInsets.fromLTRB(0, 10, 0, 10 + pb),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: mainWidth),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      ],
+                    ),
+                    padding: EdgeInsets.fromLTRB(0, 10, 0, 10 + pb),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: mainWidth),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: _routes
+                                  .map(
+                                    (e) => BottomNavigationButton(
+                                      data: e,
+                                      selectedIndex: activeIndex,
+                                      onTap: () {
+                                        if (activeIndex != e.index) {
+                                          context.go(e.route);
+                                        }
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                          SizedBox(height: 24 + padBot),
+                          Text(
+                            "howItWork".tr(),
+                            style: Theme.of(context).textTheme.displayLarge,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
+                              HowItWorkButton(
+                                width: howItWorkWidth,
+                                height: howItWorkheight,
+                                backgroundGradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFFDCFBF2),
+                                    Color(0xFFD4E5FE),
+                                  ],
                                 ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: _routes
-                                      .map(
-                                        (e) => BottomNavigationButton(
-                                          data: e,
-                                          selectedIndex: tabsRouter.activeIndex,
-                                          onTap: () {
-                                            tabsRouter.setActiveIndex(e.index);
-                                          },
-                                        ),
-                                      )
-                                      .toList(),
+                                backgroundImage: 'btn_truck.png',
+                                title: "measureWoodTruck".tr(),
+                                onPressed: () async {
+                                  final res = await context.push(
+                                    '/measure_stories_timber_carrier',
+                                  );
+                                  if (res ==
+                                          MainScreenStateChecker
+                                              .noRecognitionLeft &&
+                                      context.mounted) {
+                                    _showMenu(context);
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 12),
+                              HowItWorkButton(
+                                width: howItWorkWidth,
+                                height: howItWorkheight,
+                                backgroundGradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFFFFBF9B),
+                                    Color(0xFFFECC67),
+                                  ],
                                 ),
-                              ),
-                              SizedBox(height: 24 + padBot),
-                              Text(
-                                "howItWork".tr(),
-                                style: Theme.of(context).textTheme.displayLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  HowItWorkButton(
-                                    width: howItWorkWidth,
-                                    height: howItWorkheight,
-                                    backgroundGradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFFDCFBF2),
-                                        Color(0xFFD4E5FE),
-                                      ],
-                                    ),
-                                    backgroundImage: 'btn_truck.png',
-                                    title: "measureWoodTruck".tr(),
-                                    onPressed: () async {
-                                      final res = await context.router.push(
-                                        const MeasureStoriesTimberCarrierScreen(),
-                                      );
-                                      if (res ==
+                                backgroundImage: 'btn_timbers.png',
+                                title: "measureWoodStack".tr(),
+                                onPressed: () async {
+                                  final res = await context.push(
+                                    '/measure_stories_stack',
+                                  );
+                                  if (res ==
                                           MainScreenStateChecker
-                                              .noRecognitionLeft) {
-                                        _showMenu(context);
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  HowItWorkButton(
-                                    width: howItWorkWidth,
-                                    height: howItWorkheight,
-                                    backgroundGradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFFFFBF9B),
-                                        Color(0xFFFECC67),
-                                      ],
-                                    ),
-                                    backgroundImage: 'btn_timbers.png',
-                                    title: "measureWoodStack".tr(),
-                                    onPressed: () async {
-                                      final res = await context.router.push(
-                                        const MeasureStoriesStackScreen(),
-                                      );
-                                      if (res ==
-                                          MainScreenStateChecker
-                                              .noRecognitionLeft) {
-                                        _showMenu(context);
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  HowItWorkButton(
-                                    width: howItWorkWidth,
-                                    height: howItWorkheight,
-                                    backgroundGradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFFFFEDC9),
-                                        Color(0xFFDAF4B0),
-                                      ],
-                                    ),
-                                    backgroundImage: 'ruller_story.png',
-                                    title: "reportsOfmeasure".tr(),
-                                    onPressed: () {
-                                      context.router.push(
-                                        const ReportStoriesScreen(),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                              .noRecognitionLeft &&
+                                      context.mounted) {
+                                    _showMenu(context);
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 12),
+                              HowItWorkButton(
+                                width: howItWorkWidth,
+                                height: howItWorkheight,
+                                backgroundGradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFFFFEDC9),
+                                    Color(0xFFDAF4B0),
+                                  ],
+                                ),
+                                backgroundImage: 'ruller_story.png',
+                                title: "reportsOfmeasure".tr(),
+                                onPressed: () {
+                                  context.push('/report_stories');
+                                },
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                  );
-                },
-                routes: _routes.map((e) => e.route).toList(),
+                  ),
+                ),
+                child: BlocBuilder<PaddingNotifierCubit, double>(
+                  builder: (context, state) {
+                    final Widget body = Padding(
+                      padding: EdgeInsets.only(bottom: state),
+                      child: widget.child,
+                    );
+
+                    if (!mainScreenCubit.showPullUp.state &&
+                        dragState == _DragState.initial) {
+                      dragState = _DragState.initialDraggable;
+                    } else if (mainScreenCubit.showPullUp.state &&
+                        dragState == _DragState.initial) {
+                      dragState = _DragState.disable;
+                    }
+
+                    if (activeIndex == 1 && !mainScreenCubit.showPullUp.state) {
+                      return Stack(
+                        children: [
+                          body,
+                          _PullUp(bottom: state + pb),
+                        ],
+                      );
+                    }
+                    return body;
+                  },
+                ),
               ),
             );
           },
@@ -383,17 +362,12 @@ class _BottomNavigatorState extends State<BottomNavigator> {
     Function(BuildContext)? fallback,
     BuildContext context,
   ) async {
-    launchUrl(uri)
-        .then((value) {
-          if (fallback != null && !value) {
-            fallback(context);
-          }
-        })
-        .catchError((_) {
-          if (fallback != null) {
-            fallback(context);
-          }
-        });
+    final shouldFallback = await launchUrl(uri);
+    if (!context.mounted) return;
+
+    if (fallback != null && !shouldFallback) {
+      fallback(context);
+    }
   }
 }
 
@@ -401,7 +375,7 @@ enum _RoutesIndexes { measurements, measure, profile }
 
 class _PullUp extends StatelessWidget {
   final double bottom;
-  const _PullUp({Key? key, required this.bottom}) : super(key: key);
+  const _PullUp({required this.bottom});
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +390,7 @@ class _PullUp extends StatelessWidget {
           const RotatedBox(
             quarterTurns: 2,
             child: Icon(
-              NeuroWoodIcons.arrow_down,
+              NeuroWoodIcons.arrowDown,
               color: NeuroWoodColors.darkGray,
             ),
           ),

@@ -1,9 +1,9 @@
 // import 'dart:developer';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/core/injection.dart';
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 
@@ -12,7 +12,7 @@ import 'widgets/code_form.dart';
 import 'widgets/logo.dart';
 
 class ReauthScreen extends StatefulWidget {
-  const ReauthScreen({Key? key}) : super(key: key);
+  const ReauthScreen({super.key});
 
   @override
   State<ReauthScreen> createState() => _ReauthScreenState();
@@ -22,14 +22,15 @@ class _ReauthScreenState extends State<ReauthScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt.get<ReauthBloc>()..add(const ReauthEvent.started()),
+      create: (context) =>
+          getIt.get<ReauthBloc>()..add(const ReauthEvent.started()),
       child: const ReauthScreenView(),
     );
   }
 }
 
 class ReauthScreenView extends StatelessWidget {
-  const ReauthScreenView({Key? key}) : super(key: key);
+  const ReauthScreenView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +61,8 @@ class ReauthScreenView extends StatelessWidget {
             //     orElse: () {},
             //   );
             // }
-            state.maybeWhen(
-              error: (message,_){
+            switch (state) {
+              case ReauthError(:final message):
                 Dialogs.showDialogMessage(
                   title: "thereWasAnErrorTitle".tr(),
                   text: message,
@@ -76,17 +77,27 @@ class ReauthScreenView extends StatelessWidget {
                     ),
                   ],
                 );
-              },
-              success: (){
-                context.router.pop();
-              },
-              orElse: (){},
-            );
+                break;
+
+              case ReauthSuccess():
+                context.pop();
+                break;
+
+              default:
+                break;
+            }
+
             // state.maybeWhen(
             //   inputCode: (handleError),
             //   inputPhone: (s, _, __) => handleError(s),
-            //   successAuth: () => context.router.replace(const RegisterScreen()),
-            //   successRegister: () => context.router.replace(const BottomNavigator()),
+            //   successAuth: () {
+            //     context.pop();
+            //     context.push('/register');
+            //   },
+            //   successRegister: () {
+            //     context.pop();
+            //     context.push('/main');
+            //   },
             //   orElse: () {},
             // );
           }),
@@ -99,19 +110,23 @@ class ReauthScreenView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Logo(),
-                    const SizedBox(
-                      height: 32,
-                    ),
+                    const SizedBox(height: 32),
                     CodeForm(
                       // substate: substate,
-                      sending: state.maybeWhen(
-                        orElse: () => false,
-                        sending: () => true,
-                        awaiting: () => true,
-                      ),
+                      sending: switch (state) {
+                        ReauthState.awaiting => true,
+                        ReauthState.sending => true,
+                        _ => false,
+                      }, // TODO_check
+                      // state.maybeWhen(
+                      //   orElse: () => false,
+                      //   sending: () => true,
+                      //   awaiting: () => true,
+                      // ),
                       controller: bloc.codeController,
                       ticker: bloc.ticker,
-                      resendCode: () => bloc.add(const ReauthEvent.resendCode()),
+                      resendCode: () =>
+                          bloc.add(const ReauthEvent.resendCode()),
                       nextAction: () => bloc.add(const ReauthEvent.sendCode()),
                     ),
                   ],

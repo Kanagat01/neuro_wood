@@ -4,11 +4,11 @@ import 'package:neuro_wood/core/ui/theme.dart';
 
 class BottomNavigationButton extends StatelessWidget {
   const BottomNavigationButton({
-    Key? key,
+    super.key,
     required this.data,
     required this.selectedIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
   final BottomNavigationButtonEntity data;
   final int selectedIndex;
   final VoidCallback onTap;

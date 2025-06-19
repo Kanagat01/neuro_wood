@@ -37,7 +37,7 @@ class PrimaryButton extends StatelessWidget {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
-        onSurface: const Color(0xFFCCCCCC),
+        disabledBackgroundColor: const Color(0xFFCCCCCC),
         elevation: 0,
         shadowColor: Colors.transparent,
         enableFeedback: false,

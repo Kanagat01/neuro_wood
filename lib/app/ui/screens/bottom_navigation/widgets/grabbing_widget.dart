@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class GrabbingWidget extends StatelessWidget {
-  const GrabbingWidget({Key? key}) : super(key: key);
+  const GrabbingWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,10 +12,9 @@ class GrabbingWidget extends StatelessWidget {
         width: 80,
         height: 4,
         decoration: BoxDecoration(
-          color: NeuroWoodColors.darkGray.withOpacity(0.4),
+          color: NeuroWoodColors.darkGray.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(5),
         ),
-        
       ),
     );
   }

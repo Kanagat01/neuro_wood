@@ -1,8 +1,8 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/domain/entities/measure_type.dart';
 import 'package:neuro_wood/app/domain/entities/mesure_result_entity.dart';
 import 'package:neuro_wood/app/domain/repositories/i_parameters_measure_repository.dart';
@@ -16,7 +16,7 @@ import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_text_input.dart';
 import 'package:neuro_wood/core/buisness_constraints.dart';
 import 'package:neuro_wood/core/injection.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 
 import 'adapters/adapters.dart';
@@ -27,10 +27,10 @@ class ParametersMeasureScreen extends StatelessWidget {
   final MeasureResultEntityBase measure;
 
   const ParametersMeasureScreen({
-    Key? key,
+    super.key,
     this.resultStream,
     required this.measure,
-  }) : super(key: key);
+  });
 
   Future _showErrorRecognize({
     required BuildContext context,
@@ -43,7 +43,7 @@ class ParametersMeasureScreen extends StatelessWidget {
       text: text,
       actions: [
         DialogAction(
-          onPressed: () => context.router.pop(true),
+          onPressed: () => Navigator.of(context).pop(true),
           title: "okButton".tr(),
         ),
       ],
@@ -66,26 +66,33 @@ class ParametersMeasureScreen extends StatelessWidget {
           return BlocConsumer<ProgressStateCubit, ProgressState>(
             bloc: bloc.progressStateCubit,
             listener: (context, progressState) {
-              progressState.maybeWhen(
-                finish: (s) {
-                  bloc.addRecognition(s.woodVolumeEllipse);
-                  context.router.pushAndPopUntil(
-                    MeasureResultScreen(result: s),
-                    predicate: (route) =>
-                        route.settings.name == 'BottomNavigator',
-                  );
-                },
-                error: (e) {
-                  _showErrorRecognize(text: e, context: context);
-                },
-                orElse: () {},
-              );
+              switch (progressState) {
+                case Finish(:final result):
+                  bloc.addRecognition(result.woodVolumeEllipse);
+                  while (GoRouter.of(context).canPop()) {
+                    final current = GoRouter.of(
+                      context,
+                    ).routerDelegate.currentConfiguration;
+                    final location = current.uri.toString();
+                    if (location == '/main' ||
+                        location == '/profile' ||
+                        location == '/measurements') {
+                      break;
+                    }
+                    context.pop();
+                  }
+                  context.push('/measure-result', extra: {'result': result});
+                  break;
+                case ProgressError(:final message):
+                  _showErrorRecognize(text: message, context: context);
+                  break;
+              }
             },
             builder: (context, progressState) {
-              Stream<int?>? stream = progressState.maybeMap(
-                inProgress: (st) => st.sendingProgress,
-                orElse: () => null,
-              );
+              Stream<int?>? stream = switch (progressState) {
+                InProgress(:final sendingProgress) => sendingProgress,
+                _ => null,
+              };
               return CameraOverlay(
                 countdownStream: stream,
                 subtitle: "preloaderCameraSubtitle".tr(),
@@ -96,20 +103,25 @@ class ParametersMeasureScreen extends StatelessWidget {
                     title: const Text("parametersMeasure").tr(),
                     leading: const LeadingButton(),
                   ),
-                  body: parametersMeasureState.map(
-                    error: (ErrorLoading value) {
-                      return Center(child: Text("thereWasAnErrorTitle".tr()));
-                    },
-                    initial: (Initial value) {
-                      return const Center(child: CircularProgressIndicator());
-                    },
-                    loaded: (Loaded value) {
-                      return BlocListener<MeasureFormCubit, MeasureFormState>(
+                  body: switch (parametersMeasureState) {
+                    ParametersMeasureErrorLoading() => Center(
+                      child: Text("thereWasAnErrorTitle".tr()),
+                    ),
+                    ParametersMeasureInitial() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    ParametersMeasureLoaded(
+                      :final locations,
+                      :final bread,
+                      :final vehicleType,
+                      :final sortiment,
+                    ) =>
+                      BlocListener<MeasureFormCubit, MeasureFormState>(
                         bloc: bloc.formLogic,
                         listener: (context, state) {
                           if (state is Valid) {
                             FocusScope.of(context).unfocus();
-                            // context.router.push(const CameraScreen());
+                            // context.push('/camera', extra: {'type': ''});
                           }
                         },
                         child: Center(
@@ -128,7 +140,7 @@ class ParametersMeasureScreen extends StatelessWidget {
                                   bloc: bloc.locationValue,
                                   builder: (context, s) {
                                     return InputSelect(
-                                      values: value.locations,
+                                      values: locations,
                                       selectedValue: s,
                                       label: "locationLabel".tr(),
                                       onChange: (c) => bloc.locationValue.set(
@@ -153,7 +165,7 @@ class ParametersMeasureScreen extends StatelessWidget {
                                       bloc: bloc.formLogic,
                                       builder: (context, fs) {
                                         return InputMultiSelect(
-                                          values: value.bread,
+                                          values: bread,
                                           selectedValues: s,
                                           label: "breadLabel".tr(),
                                           errorText: fs is Invalid
@@ -183,7 +195,7 @@ class ParametersMeasureScreen extends StatelessWidget {
                                   bloc: bloc.sortimentValue,
                                   builder: (context, s) {
                                     return InputSelect(
-                                      values: value.sortiment,
+                                      values: sortiment,
                                       selectedValue: s,
                                       label: "sortimentLabel".tr(),
                                       onChange: (c) => bloc.sortimentValue.set(
@@ -204,7 +216,7 @@ class ParametersMeasureScreen extends StatelessWidget {
                                     bloc: bloc.vehicleTypeValue,
                                     builder: (context, s) {
                                       return InputSelect(
-                                        values: value.vehicleType,
+                                        values: vehicleType,
                                         selectedValue: s,
                                         label: "vehicleType".tr(),
                                         onChange: (c) =>
@@ -306,7 +318,7 @@ class ParametersMeasureScreen extends StatelessWidget {
                                     );
                                     final fls =
                                         await bloc.formLogic.stream.first;
-                                    if (fls is Valid) {
+                                    if (fls is Valid && context.mounted) {
                                       FocusScope.of(context).unfocus();
                                     }
                                   },
@@ -321,12 +333,11 @@ class ParametersMeasureScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                      );
-                    },
-                    loading: (Loading value) {
-                      return const Center(child: CircularProgressIndicator());
-                    },
-                  ),
+                      ),
+                    ParametersMeasureLoading() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  },
                 ),
               );
             },

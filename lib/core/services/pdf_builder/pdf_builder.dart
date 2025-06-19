@@ -91,11 +91,11 @@ class PDFBuilder {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          describeEnum(result.type).tr(),
+                          result.type.name.tr(),
                           // result.licensePlateText.toUpperCase(),
                           style: _boldTextStyle.copyWith(
                             color: PdfColor.fromInt(
-                              NeuroWoodColors.black.value,
+                              NeuroWoodColors.black.toARGB32(),
                             ),
                             fontSize: 16,
                           ),
@@ -104,7 +104,7 @@ class PDFBuilder {
                           dateFormat.format(result.dateTime),
                           style: _regularTextStyle.copyWith(
                             color: PdfColor.fromInt(
-                              NeuroWoodColors.darkGray.value,
+                              NeuroWoodColors.darkGray.toARGB32(),
                             ),
                             fontSize: 16,
                           ),
@@ -184,7 +184,7 @@ class PDFBuilder {
                             textAlign: TextAlign.right,
                             style: _boldTextStyle.copyWith(
                               color: PdfColor.fromInt(
-                                NeuroWoodColors.black.value,
+                                NeuroWoodColors.black.toARGB32(),
                               ),
                               fontSize: 24,
                             ),
@@ -325,7 +325,7 @@ class PDFBuilder {
         Text(
           name,
           style: _regularTextStyle.copyWith(
-            color: PdfColor.fromInt(NeuroWoodColors.darkGray.value),
+            color: PdfColor.fromInt(NeuroWoodColors.darkGray.toARGB32()),
             fontSize: 16,
           ),
         ),
@@ -333,7 +333,7 @@ class PDFBuilder {
           child: Text(
             value,
             style: _boldTextStyle.copyWith(
-              color: PdfColor.fromInt(NeuroWoodColors.black.value),
+              color: PdfColor.fromInt(NeuroWoodColors.black.toARGB32()),
               fontSize: 16,
             ),
             textAlign: TextAlign.right,

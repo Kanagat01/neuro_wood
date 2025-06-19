@@ -1,6 +1,6 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
@@ -10,12 +10,12 @@ class InputSelect extends StatelessWidget {
   final String label;
   final Function(InputSelectAdapter) onChange;
   const InputSelect({
-    Key? key,
+    super.key,
     required this.values,
     required this.selectedValue,
     required this.label,
     required this.onChange,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +29,13 @@ class InputSelect extends StatelessWidget {
         InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () async {
-            final value = await context.router.push(
-              SelectorScreen(
-                label: label,
-                values: values,
-                selectedValue: selectedValue,
-              ),
+            final value = await context.push(
+              '/selector',
+              extra: {
+                'label': label,
+                'values': values,
+                'selectedValue': selectedValue,
+              },
             );
             if (value is InputSelectAdapter) {
               onChange(value);
@@ -54,7 +55,7 @@ class InputSelect extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const Icon(
-                  NeuroWoodIcons.arrow_down,
+                  NeuroWoodIcons.arrowDown,
                   size: 24,
                   color: NeuroWoodColors.black,
                 ),
@@ -74,13 +75,13 @@ class InputMultiSelect extends StatelessWidget {
   final String? errorText;
   final Function(List<InputSelectAdapter>) onChange;
   const InputMultiSelect({
-    Key? key,
+    super.key,
     required this.values,
     required this.selectedValues,
     required this.label,
     required this.onChange,
     this.errorText,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -94,12 +95,13 @@ class InputMultiSelect extends StatelessWidget {
         InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () async {
-            final value = await context.router.push(
-              MultiSelectorScreen(
-                label: label,
-                values: values,
-                selectedValues: selectedValues,
-              ),
+            final value = await context.push(
+              '/multi-selector',
+              extra: {
+                'label': label,
+                'values': values,
+                'selectedValues': selectedValues,
+              },
             );
             if (value is List<InputSelectAdapter>) {
               onChange(value);
@@ -122,7 +124,7 @@ class InputMultiSelect extends StatelessWidget {
                   ),
                 ),
                 const Icon(
-                  NeuroWoodIcons.arrow_down,
+                  NeuroWoodIcons.arrowDown,
                   size: 24,
                   color: NeuroWoodColors.black,
                 ),

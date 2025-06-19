@@ -12,13 +12,13 @@ class CameraOverlay extends StatelessWidget {
   final bool canPop;
   final String subtitle;
   const CameraOverlay({
-    Key? key,
+    super.key,
     required this.child,
     this.bgColor = const Color(0x88000000),
     required this.countdownStream,
     required this.subtitle,
     this.canPop = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +34,8 @@ class CameraOverlay extends StatelessWidget {
               return const SizedBox();
             }
 
-            return WillPopScope(
-              onWillPop: () => Future.value(canPop),
+            return PopScope(
+              canPop: canPop,
               child: Container(
                 alignment: Alignment.center,
                 color: bgColor,

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:bloc/bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:extended_masked_text/extended_masked_text.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:neuro_wood/app/domain/entities/stream_ticker.dart';
@@ -20,8 +20,9 @@ part 'auth_state.dart';
 part 'auth_bloc.freezed.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final TextEditingController phoneController =
-      MaskedTextController(mask: '000 000 00 00');
+  final TextEditingController phoneController = MaskedTextController(
+    mask: '000 000 00 00',
+  );
   final TextEditingController codeController = TextEditingController();
   final FocusNode focusNodePhone = FocusNode();
   final IAuthRepository authRepository;
@@ -33,22 +34,39 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   StreamSubscription<int>? _subscription;
   final BehaviorSubject<int?> _tickerSubject = BehaviorSubject<int?>();
   AuthBloc({required this.authRepository, required this.analytics})
-      : super(const _InitialState()) {
+    : super(const AuthInitialState()) {
     on<AuthEvent>((event, emit) async {
-      await event.map(
-        sendPhone: (e) => _sendPhone(e, emit),
-        sendCode: (e) => _sendCode(e, emit),
-        resendCode: (e) => _resendCode(e, emit),
-        back: (e) => _back(e, emit),
-        firebaseEvent: (e) => _fbEvent(e, emit),
-        enableValidatePhone: (e) => _enableValidatePhone(e, emit),
-        changeEnableBtn: (e) => _changeEnableBtn(e, emit),
-        logout: (e) => _logout(e, emit),
-      );
+      switch (event) {
+        case AuthSendPhone():
+          await _sendPhone(event, emit);
+          break;
+        case AuthSendCode():
+          await _sendCode(event, emit);
+          break;
+        case AuthResendCode():
+          await _resendCode(event, emit);
+          break;
+        case AuthBack():
+          await _back(event, emit);
+          break;
+        case AuthFirebaseEvent():
+          await _fbEvent(event, emit);
+          break;
+        case AuthEnableValidatePhone():
+          await _enableValidatePhone(event, emit);
+          break;
+        case AuthChangeEnableBtn():
+          await _changeEnableBtn(event, emit);
+          break;
+        case AuthLogout():
+          await _logout(event, emit);
+          break;
+      }
     });
     authRepository.authStream.listen(_fbListener);
-    _keyboardVisibilitySubs =
-        KeyboardVisibilityController().onChange.listen((event) {
+    _keyboardVisibilitySubs = KeyboardVisibilityController().onChange.listen((
+      event,
+    ) {
       if (!checkKeyboard && event) {
         checkKeyboard = true;
       }
@@ -58,105 +76,117 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
     phoneController.addListener(() {
-      if (state is _InputPhone) {
+      if (state is AuthInputPhone) {
         String value = phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
-        if (value.length != 10 && (state as _InputPhone).enableNextBtn) {
+        if (value.length != 10 && (state as AuthInputPhone).enableNextBtn) {
           add(const AuthEvent.changeEnableBtn(false));
         } else if (value.length == 10 &&
-            !(state as _InputPhone).enableNextBtn) {
+            !(state as AuthInputPhone).enableNextBtn) {
           add(const AuthEvent.changeEnableBtn(true));
         }
       }
     });
   }
 
-  _changeEnableBtn(_ChangeEnableBtn event, Emitter<AuthState> emit) {
-    emit((state as _InputPhone).copyWith(enableNextBtn: event.enableNextBtn));
+  _changeEnableBtn(AuthChangeEnableBtn event, Emitter<AuthState> emit) {
+    emit(
+      (state as AuthInputPhone).copyWith(enableNextBtn: event.enableNextBtn),
+    );
   }
 
-  @override
-  Future<void> close() {
-    return super.close();
-  }
-
-  _enableValidatePhone(_EnableValidatePhone event, Emitter<AuthState> emit) {
-    if (state is _InputPhone) {
-      emit((state as _InputPhone).copyWith(validateForm: true));
+  _enableValidatePhone(AuthEnableValidatePhone event, Emitter<AuthState> emit) {
+    if (state is AuthInputPhone) {
+      emit((state as AuthInputPhone).copyWith(validateForm: true));
     }
   }
 
-  _logout(_Logout event, Emitter<AuthState> emit) {
+  _logout(AuthLogout event, Emitter<AuthState> emit) {
     _clear();
     // emit(const AuthState.initial());
-    emit(const AuthState.inputPhone(
-      substate: AuthSubstate.initial(),
-      validateForm: false,
-      enableNextBtn: false,
-    ));
+    emit(
+      const AuthState.inputPhone(
+        substate: AuthSubstate.initial(),
+        validateForm: false,
+        enableNextBtn: false,
+      ),
+    );
   }
 
   _fbListener(FASState event) {
     add(AuthEvent.firebaseEvent(event));
   }
 
-  _sendPhone(_SendPhone event, Emitter<AuthState> emit) async {
+  _sendPhone(AuthSendPhone event, Emitter<AuthState> emit) async {
     String value = phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (value.length != 10) {
-      emit(const AuthState.inputPhone(
-        substate: AuthSubstate.invalid(),
-        validateForm: true,
-        enableNextBtn: true,
-      ));
+      emit(
+        const AuthState.inputPhone(
+          substate: AuthSubstate.invalid(),
+          validateForm: true,
+          enableNextBtn: true,
+        ),
+      );
       return;
     }
-    value = '+7' + value;
+    value = '+7$value';
     if (value != _oldPhone) {
       _oldPhone = value;
-      emit(const AuthState.inputPhone(
-        substate: AuthSubstate.sending(),
-        validateForm: true,
-        enableNextBtn: true,
-      ));
+      emit(
+        const AuthState.inputPhone(
+          substate: AuthSubstate.sending(),
+          validateForm: true,
+          enableNextBtn: true,
+        ),
+      );
       final res = await authRepository.sendPhone(value);
-      res.maybeWhen(
-          phoneVerificationCompleted: (_) {
-            codeController.clear();
-            _startTicker();
-            emit(const AuthState.inputCode(_Initial()));
-          },
-          phoneVerificationError: (code, e) {
-            emit(
-              AuthState.inputPhone(
-                substate: AuthSubstate.error(
-                    message: e ?? "thereWasAnErrorTitle".tr(),
-                    ms: DateTime.now().millisecondsSinceEpoch),
-                validateForm: (state as _InputPhone).validateForm,
-                enableNextBtn: (state as _InputPhone).enableNextBtn,
+      switch (res) {
+        case FAPhoneVerificationCompleted():
+          codeController.clear();
+          _startTicker();
+          emit(const AuthState.inputCode(AuthSubInitial()));
+          break;
+        case FAPhoneVerificationError(:final message):
+          emit(
+            AuthState.inputPhone(
+              substate: AuthSubstate.error(
+                message: message ?? "thereWasAnErrorTitle".tr(),
+                ms: DateTime.now().millisecondsSinceEpoch,
               ),
-            );
-          },
-          orElse: () {});
+              validateForm: (state as AuthInputPhone).validateForm,
+              enableNextBtn: (state as AuthInputPhone).enableNextBtn,
+            ),
+          );
+          break;
+        default:
+          break;
+      }
     } else {
-      emit(const _InputCode(_Initial()));
+      emit(const AuthInputCode(AuthSubInitial()));
     }
     return;
   }
 
-  _sendCode(_SendCode event, Emitter<AuthState> emit) async {
+  _sendCode(AuthSendCode event, Emitter<AuthState> emit) async {
     String value = codeController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (value.isEmpty) {
-      emit(const _InputCode(_Invalid()));
+      emit(const AuthInputCode(AuthSubInvalid()));
       return;
     }
-    emit(const _InputCode(_Sending()));
+    emit(const AuthInputCode(AuthSubSending()));
     final res = await authRepository.sendCode(value);
     res.fold(
       (l) {
         log('_sendCode error: ${l.exception.code}');
         String message = l.exception.message ?? "thereWasAnErrorTitle".tr();
         message = _mapErrorCode(l.exception.code) ?? message;
-        emit(AuthState.inputCode(AuthSubstate.error(
-            message: message, ms: DateTime.now().millisecondsSinceEpoch)));
+        emit(
+          AuthState.inputCode(
+            AuthSubstate.error(
+              message: message,
+              ms: DateTime.now().millisecondsSinceEpoch,
+            ),
+          ),
+        );
       },
       (r) {
         return null;
@@ -186,7 +216,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   _startTicker() {
     _subscription?.cancel();
     _tickerSubject.sink.add(60);
-    _subscription = _ticker.tickDec(ticks: 60).asBroadcastStream().listen(
+    _subscription = _ticker
+        .tickDec(ticks: 60)
+        .asBroadcastStream()
+        .listen(
           (int v) => _tickerSubject.sink.add(v),
           onDone: () => _tickerSubject.sink.add(null),
         );
@@ -194,7 +227,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   bool _lockResend = false;
 
-  _resendCode(_ResendCode event, Emitter<AuthState> emit) async {
+  _resendCode(AuthResendCode event, Emitter<AuthState> emit) async {
     if (_lockResend) {
       return;
     }
@@ -203,60 +236,74 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     //phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
     final fasState = await authRepository.resendCode(value);
     _lockResend = false;
-    fasState.maybeWhen(
-      phoneVerificationError: (e, m) {
-        String message = "unexpectedError".tr();
-        message = _mapErrorCode(e) ?? message;
-        emit(AuthState.inputCode(AuthSubstate.error(
-          message: message,
-          ms: DateTime.now().millisecondsSinceEpoch,
-        )));
-      },
-      orElse: () {
-        _startTicker();
-      },
-    );
-  }
-
-  _back(_Back event, Emitter<AuthState> emit) {
-    emit(const AuthState.inputPhone(
-      substate: AuthSubstate.initial(),
-      validateForm: true,
-      enableNextBtn: true,
-    ));
-  }
-
-  _fbEvent(_FirebaseEvent event, Emitter<AuthState> emit) {
-    event.state.maybeWhen(
-      unauthorized: () {
-        emit(const AuthState.inputPhone(
-          substate: AuthSubstate.initial(),
-          validateForm: false,
-          enableNextBtn: false,
-        ));
-      },
-      orElse: () {},
-    );
-    state.maybeWhen(
-      initial: () {
-        event.state.maybeWhen(
-          unauthorized: () => emit(
-            const AuthState.inputPhone(
-              substate: AuthSubstate.initial(),
-              validateForm: false,
-              enableNextBtn: false,
+    switch (fasState) {
+      case FAPhoneVerificationError(:final code):
+        String errorMessage = "unexpectedError".tr();
+        errorMessage = _mapErrorCode(code) ?? errorMessage;
+        emit(
+          AuthState.inputCode(
+            AuthSubstate.error(
+              message: errorMessage,
+              ms: DateTime.now().millisecondsSinceEpoch,
             ),
           ),
-          authorized: (_) => emit(const AuthState.successAuth()),
-          authorizedWithData: (user) {
+        );
+        break;
+      default:
+        _startTicker();
+        break;
+    }
+  }
+
+  _back(AuthBack event, Emitter<AuthState> emit) {
+    emit(
+      const AuthState.inputPhone(
+        substate: AuthSubstate.initial(),
+        validateForm: true,
+        enableNextBtn: true,
+      ),
+    );
+  }
+
+  _fbEvent(AuthFirebaseEvent event, Emitter<AuthState> emit) {
+    switch (event.state) {
+      case FAUnauthorized():
+        emit(
+          const AuthState.inputPhone(
+            substate: AuthSubstate.initial(),
+            validateForm: false,
+            enableNextBtn: false,
+          ),
+        );
+        break;
+      default:
+        break;
+    }
+    switch (state) {
+      case AuthInitialState():
+        switch (event.state) {
+          case FAUnauthorized():
+            emit(
+              const AuthState.inputPhone(
+                substate: AuthSubstate.initial(),
+                validateForm: false,
+                enableNextBtn: false,
+              ),
+            );
+            break;
+          case FAAuthorized():
+            emit(const AuthState.successAuth());
+            break;
+          case FAAuthorizedWithData(:final user):
             analytics.setUserProfile(user.uid);
             emit(const AuthState.successRegister());
-          },
-          orElse: () {},
-        );
-      },
-      inputPhone: (substate, isValidate, enableNextBtn) {
-        event.state.maybeWhen(
+            break;
+          default:
+            break;
+        }
+        break;
+      case AuthInputPhone():
+        switch (event.state) {
           // phoneVerificationCompleted: () {
           //   codeController.clear();
           //   _startTicker();
@@ -271,30 +318,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           //     ),
           //   );
           // },
-          orElse: () {},
-        );
-      },
-      inputCode: (substate) {
-        event.state.maybeWhen(
-          authorized: (_) {
+          default:
+            break;
+        }
+        break;
+      case AuthInputCode():
+        switch (event.state) {
+          case FAAuthorized():
             emit(const AuthState.successAuth());
             _clear();
-          },
-          signInError: (code, e) {
-            log('phoneVerificationError: $code, $e');
-            emit(AuthState.inputCode(AuthSubstate.error(
-                message: e ?? "thereWasAnErrorTitle".tr(),
-                ms: DateTime.now().millisecondsSinceEpoch)));
-          },
-          authorizedWithData: (_) {
+            break;
+          case FASignInError(:final code, :final message):
+            log('phoneVerificationError: $code, $message');
+            emit(
+              AuthState.inputCode(
+                AuthSubstate.error(
+                  message: message ?? "thereWasAnErrorTitle".tr(),
+                  ms: DateTime.now().millisecondsSinceEpoch,
+                ),
+              ),
+            );
+            break;
+          case FAAuthorizedWithData():
             emit(const AuthState.successRegister());
             _clear();
-          },
-          orElse: () {},
-        );
-      },
-      orElse: () {},
-    );
+            break;
+          default:
+            break;
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   _clear() {

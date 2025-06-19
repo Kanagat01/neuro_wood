@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:extended_masked_text/extended_masked_text.dart';
 import 'package:flutter/material.dart';
@@ -14,47 +14,51 @@ part 'register_state.dart';
 part 'register_bloc.freezed.dart';
 
 class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
-  final _InputWrapper name = _InputWrapper(
+  final RegisterInput name = RegisterInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: TextEditingController(),
     focusNode: FocusNode(),
   );
-  final _InputWrapper phone = _InputWrapper(
+  final RegisterInput phone = RegisterInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: MaskedTextController(mask: '000 000 00 00'),
     focusNode: FocusNode(),
     isValid: true,
   );
-  final _InputWrapper company = _InputWrapper(
+  final RegisterInput company = RegisterInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: TextEditingController(),
     focusNode: FocusNode(),
   );
-  final _InputWrapper email = _InputWrapper(
+  final RegisterInput email = RegisterInput(
     enableValidate: getIt.get<ToggleCubit>(param1: false, param2: null),
     controller: TextEditingController(),
     focusNode: FocusNode(),
   );
 
-  late List<_InputWrapper> _wrappers;
+  late List<RegisterInput> _wrappers;
   TextEditingController get nameController => name.controller;
   TextEditingController get companyController => company.controller;
   TextEditingController get phoneController => phone.controller;
   TextEditingController get emailController => email.controller;
-  final ToggleCubit isAgree =
-      getIt.get<ToggleCubit>(param1: false, param2: null);
-  final ToggleCubit isActiveBtn =
-      getIt.get<ToggleCubit>(param1: false, param2: null);
+  final ToggleCubit isAgree = getIt.get<ToggleCubit>(
+    param1: false,
+    param2: null,
+  );
+  final ToggleCubit isActiveBtn = getIt.get<ToggleCubit>(
+    param1: false,
+    param2: null,
+  );
   String? _oldPhone;
   String? _uid;
 
   final RegExp emailRegexp = RegExp(
-      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
+    r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
+  );
 
   final IRegisterRepository registerRepository;
-  RegisterBloc({
-    required this.registerRepository,
-  }) : super(const _Initial()) {
+  RegisterBloc({required this.registerRepository})
+    : super(const RegisterInitial()) {
     on<_Send>(_send);
     on<_ChangeAgree>(_changeAgree);
     nameController.addListener(_nameListener);
@@ -62,21 +66,13 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     phoneController.addListener(_phoneListener);
     emailController.addListener(_emailListener);
     isAgree.stream.listen((_) => _listenerFields());
-    _wrappers = [
-      name,
-      phone,
-      company,
-      email,
-    ];
+    _wrappers = [name, phone, company, email];
     final userEither = registerRepository.getCurrentUser();
-    userEither.fold(
-      (failure) {},
-      (currentUser) async {
-        _uid = currentUser.uid;
-        _oldPhone = currentUser.phoneNumber!;
-        phoneController.text = _oldPhone!.replaceAll('+7', '');
-      },
-    );
+    userEither.fold((failure) {}, (currentUser) async {
+      _uid = currentUser.uid;
+      _oldPhone = currentUser.phoneNumber!;
+      phoneController.text = _oldPhone!.replaceAll('+7', '');
+    });
 
     for (var e in _wrappers) {
       e.focusNode.addListener(() {
@@ -156,7 +152,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   }
 
   _send(_Send event, Emitter<RegisterState> emit) async {
-    if (state is _Sending) return;
+    if (state is RegisterSending) return;
     emit(const RegisterState.sending());
     if (_oldPhone != null && _uid != null) {
       String phone = _oldPhone!;
@@ -164,15 +160,16 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       workPhone = workPhone.isEmpty ? phone : '+7$workPhone';
       final res = await registerRepository.setUser(
         UserEntity(
-            uid: _uid!,
-            company: companyController.text.trim(),
-            name: nameController.text.trim(),
-            email: emailController.text.trim(),
-            phone: phone,
-            recognitionsCount: 0,
-            recognitionsVolume: 0,
-            workPhone: workPhone,
-            subscription: SubscriptionEntity.initial()),
+          uid: _uid!,
+          company: companyController.text.trim(),
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          phone: phone,
+          recognitionsCount: 0,
+          recognitionsVolume: 0,
+          workPhone: workPhone,
+          subscription: SubscriptionEntity.initial(),
+        ),
       );
       res.fold(
         (l) {
@@ -192,7 +189,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   }
 }
 
-class _InputWrapper {
+class RegisterInput {
   final TextEditingController controller;
   final FocusNode focusNode;
   bool isCheckedKeyboard;
@@ -200,7 +197,7 @@ class _InputWrapper {
   bool wasFocus;
   bool isValid;
 
-  _InputWrapper({
+  RegisterInput({
     required this.controller,
     required this.focusNode,
     this.isCheckedKeyboard = false,

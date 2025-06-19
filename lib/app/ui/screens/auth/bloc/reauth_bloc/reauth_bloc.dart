@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:bloc/bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:neuro_wood/app/domain/entities/stream_ticker.dart';
 import 'package:neuro_wood/app/domain/repositories/i_reauth_repository.dart';
+import 'package:neuro_wood/core/services/firebase/firebase_auth/fas_state.dart';
 import 'package:rxdart/rxdart.dart';
 
 part 'reauth_event.dart';
@@ -20,35 +21,48 @@ class ReauthBloc extends Bloc<ReauthEvent, ReauthState> {
   final StreamTicker _ticker = const StreamTicker();
   final TextEditingController codeController = TextEditingController();
 
-  ReauthBloc({
-    required this.reauthRepository,
-  }) : super(const ReauthState.initial()) {
+  ReauthBloc({required this.reauthRepository})
+    : super(const ReauthState.initial()) {
     on<ReauthEvent>((event, emit) async {
-      await event.map(
-        started: (event) => _started(event, emit),
-        sendCode: (event) => _sendCode(event, emit),
-        resendCode: (event) => _resendCode(event, emit),
-      );
+      switch (event) {
+        case ReauthStarted():
+          await _started(event, emit);
+          break;
+
+        case ReauthSendCode():
+          await _sendCode(event, emit);
+          break;
+
+        case ReauthResendCode():
+          await _resendCode(event, emit);
+          break;
+      }
     });
   }
 
-  _started(_Started event, Emitter<ReauthState> emit) async {
+  _started(ReauthStarted event, Emitter<ReauthState> emit) async {
     //
     // emit(const ReauthState.awaiting());
     final res = await reauthRepository.sendPhone();
-
-    res.maybeWhen(
-        phoneVerificationCompleted: (_) {
-          emit(const ReauthState.initial());
-          _startTicker();
-        },
-        phoneVerificationError: (code, e) {
-          emit(ReauthState.error(message: e ?? "thereWasAnErrorTitle".tr(), ms: DateTime.now().millisecondsSinceEpoch));
-        },
-        orElse: () {});
+    switch (res) {
+      case FAPhoneVerificationCompleted():
+        emit(const ReauthState.initial());
+        _startTicker();
+        break;
+      case FAPhoneVerificationError(:final message):
+        emit(
+          ReauthState.error(
+            message: message ?? "thereWasAnErrorTitle".tr(),
+            ms: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
+        break;
+      default:
+        break;
+    }
   }
 
-  _sendCode(_SendCode event, Emitter<ReauthState> emit) async {
+  _sendCode(ReauthSendCode event, Emitter<ReauthState> emit) async {
     String value = codeController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (value.isEmpty) {
       emit(const ReauthState.invalid());
@@ -61,10 +75,12 @@ class ReauthBloc extends Bloc<ReauthEvent, ReauthState> {
         log('_sendCode error: ${l.exception.code}');
         String message = l.exception.message ?? "thereWasAnErrorTitle".tr();
         message = _mapErrorCode(l.exception.code) ?? message;
-        emit(ReauthState.error(
-          message: message,
-          ms: DateTime.now().millisecondsSinceEpoch,
-        ));
+        emit(
+          ReauthState.error(
+            message: message,
+            ms: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
       },
       (r) {
         emit(const ReauthState.success());
@@ -74,29 +90,46 @@ class ReauthBloc extends Bloc<ReauthEvent, ReauthState> {
   }
 
   bool _lockResend = false;
-  _resendCode(_ResendCode event, Emitter<ReauthState> emit) async {
+  _resendCode(ReauthResendCode event, Emitter<ReauthState> emit) async {
     if (_lockResend) {
       return;
     }
     _lockResend = true;
     final fasState = await reauthRepository.resendCode();
     _lockResend = false;
-    fasState.maybeWhen(
-      phoneVerificationError: (e, m) {
-        String message = "unexpectedError".tr();
-        message = _mapErrorCode(e) ?? message;
-        emit(ReauthState.error(
-          message: message,
-          ms: DateTime.now().millisecondsSinceEpoch,
-        ));
-      },
-      orElse: () {
+    switch (fasState) {
+      case FASState.phoneVerificationError:
+        (e, m) {
+          String message = "unexpectedError".tr();
+          message = _mapErrorCode(e) ?? message;
+          emit(
+            ReauthState.error(
+              message: message,
+              ms: DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+        };
+      default:
         _startTicker();
-      },
-    );
+    }
+    // fasState.maybeWhen(
+    //   phoneVerificationError: (e, m) {
+    //     String message = "unexpectedError".tr();
+    //     message = _mapErrorCode(e) ?? message;
+    //     emit(
+    //       ReauthState.error(
+    //         message: message,
+    //         ms: DateTime.now().millisecondsSinceEpoch,
+    //       ),
+    //     );
+    //   },
+    //   orElse: () {
+    //     _startTicker();
+    //   },
+    // );
   }
 
-  //TODO: вынести маппинг ошибок от cloud functions
+  // TODO: вынести маппинг ошибок от cloud functions
   String? _mapErrorCode(String code) {
     String? message;
     if (code == 'invalid-verification-code') {
@@ -118,7 +151,10 @@ class ReauthBloc extends Bloc<ReauthEvent, ReauthState> {
   _startTicker() {
     _subscription?.cancel();
     _tickerSubject.sink.add(60);
-    _subscription = _ticker.tickDec(ticks: 60).asBroadcastStream().listen(
+    _subscription = _ticker
+        .tickDec(ticks: 60)
+        .asBroadcastStream()
+        .listen(
           (int v) => _tickerSubject.sink.add(v),
           onDone: () => _tickerSubject.sink.add(null),
         );

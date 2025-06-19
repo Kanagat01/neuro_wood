@@ -8,10 +8,10 @@ class ProfileInfo extends StatelessWidget {
   final UserEntity user;
   final VoidCallback changeButtonOnPressed;
   const ProfileInfo({
-    Key? key,
+    super.key,
     required this.user,
     required this.changeButtonOnPressed,
-  }) : super(key: key);
+  });
 
   String formatPhone(String s) => s.replaceAllMapped(
     RegExp(r'(\+7)(\d{3})(\d{3})(\d{2})(\d{2})'),

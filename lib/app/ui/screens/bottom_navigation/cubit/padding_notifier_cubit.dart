@@ -1,9 +1,9 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PaddingNotifierCubit extends Cubit<double> {
-  PaddingNotifierCubit(double initValue) : super(initValue);
+  PaddingNotifierCubit(super.initValue);
 
-  set(double value){
+  set(double value) {
     emit(value);
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/rendering.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -14,23 +14,28 @@ part 'image_loader_cubit.freezed.dart';
 
 class ImageLoaderCubit extends Cubit<ImageLoaderState> {
   final IMeasurementsRepository measurementsRepository;
-  ImageLoaderCubit({
-    required this.measurementsRepository,
-  }) : super(const ImageLoaderState.initial());
+  ImageLoaderCubit({required this.measurementsRepository})
+    : super(const ImageLoaderState.initial());
 
   load(MeasureResultEntityFinish result, double screenWidth) async {
     emit(const ImageLoaderState.loading());
     try {
-      String? path =
-          await measurementsRepository.getMeasureImage(result.measureId);
+      String? path = await measurementsRepository.getMeasureImage(
+        result.measureId,
+      );
       if (path == null) {
         emit(const ImageLoaderState.error());
         return;
       }
       ImageProvider image = NetworkImage(path);
       Completer<ImageInfo> completer = Completer<ImageInfo>();
-      image.resolve(const ImageConfiguration()).addListener(ImageStreamListener(
-          (ImageInfo info, bool _) => completer.complete(info)));
+      image
+          .resolve(const ImageConfiguration())
+          .addListener(
+            ImageStreamListener(
+              (ImageInfo info, bool _) => completer.complete(info),
+            ),
+          );
 
       final info = await completer.future;
       final res = _prepare(
@@ -39,9 +44,7 @@ class ImageLoaderCubit extends Cubit<ImageLoaderState> {
         result: result,
         image: image,
       );
-      emit(ImageLoaderState.loaded(
-        resultImageEntity: res,
-      ));
+      emit(ImageLoaderState.loaded(resultImageEntity: res));
     } catch (e) {
       emit(const ImageLoaderState.error());
     }
@@ -53,8 +56,10 @@ class ImageLoaderCubit extends Cubit<ImageLoaderState> {
     required MeasureResultEntityFinish result,
     required ImageProvider image,
   }) {
-    final Size size =
-        Size(info.image.width.toDouble(), info.image.height.toDouble());
+    final Size size = Size(
+      info.image.width.toDouble(),
+      info.image.height.toDouble(),
+    );
     final double pixelRatio = size.width / screenWidth;
     final String fileName = DateFormat('dd.MM.y_HH:MM').format(result.dateTime);
     PainterBuilder builder = PainterBuilder(info);

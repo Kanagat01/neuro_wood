@@ -3,11 +3,11 @@ import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 
 class RotatingLogo extends StatefulWidget {
   const RotatingLogo({
-    Key? key,
+    super.key,
     required this.size,
     required this.color,
     this.duration = const Duration(milliseconds: 20000),
-  }) : super(key: key);
+  });
   final double size;
   final Color color;
   final Duration duration;
@@ -16,15 +16,13 @@ class RotatingLogo extends StatefulWidget {
   State<RotatingLogo> createState() => _RotatingLogoState();
 }
 
-class _RotatingLogoState extends State<RotatingLogo> with SingleTickerProviderStateMixin {
+class _RotatingLogoState extends State<RotatingLogo>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
     _controller.repeat();
     super.initState();
   }
@@ -39,16 +37,9 @@ class _RotatingLogoState extends State<RotatingLogo> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      child: Icon(
-        NeuroWoodIcons.logo,
-        size: widget.size,
-        color: widget.color,
-      ),
-      builder: (BuildContext context, Widget? _widget) {
-        return Transform.rotate(
-          angle: _controller.value * 6.3,
-          child: _widget,
-        );
+      child: Icon(NeuroWoodIcons.logo, size: widget.size, color: widget.color),
+      builder: (BuildContext context, Widget? widget) {
+        return Transform.rotate(angle: _controller.value * 6.3, child: widget);
       },
     );
   }

@@ -1,18 +1,15 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart' as el;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/domain/entities/measure_type.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class MeasureOnboardingScreen extends StatelessWidget {
   final MeasureType type;
-  const MeasureOnboardingScreen({
-    Key? key,
-    required this.type,
-  }) : super(key: key);
+  const MeasureOnboardingScreen({super.key, required this.type});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +28,7 @@ class MeasureOnboardingScreen extends StatelessWidget {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.white.withOpacity(.15),
+        statusBarColor: Colors.white.withValues(alpha: .15),
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
@@ -57,10 +54,10 @@ class MeasureOnboardingScreen extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     stops: const [0, .33, .54, 1],
                     colors: [
-                      Colors.black.withOpacity(.6),
-                      Colors.black.withOpacity(0),
-                      Colors.black.withOpacity(.2),
-                      Colors.black.withOpacity(.8),
+                      Colors.black.withValues(alpha: .6),
+                      Colors.black.withValues(alpha: 0),
+                      Colors.black.withValues(alpha: .2),
+                      Colors.black.withValues(alpha: .8),
                     ],
                   ),
                 ),
@@ -97,17 +94,21 @@ class MeasureOnboardingScreen extends StatelessWidget {
                                         fontSize: 16,
                                       ),
                                     ),
-                                    const SizedBox(
-                                      height: 20,
-                                    ),
+                                    const SizedBox(height: 20),
                                     PrimaryButton(
                                       text: "continueButton".tr(),
                                       primaryColor: NeuroWoodColors.green,
                                       onPressed: () {
-                                        context.router.popAndPush(
-                                            CameraScreen(type: type));
+                                        context.pop();
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                              context.push(
+                                                '/camera',
+                                                extra: {'type': type},
+                                              );
+                                            });
                                       },
-                                    )
+                                    ),
                                   ],
                                 ),
                               ),
@@ -152,36 +153,22 @@ class CameraMask extends ShapeBorder {
 
   @override
   Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
-    Path _getLeftTopPath(Rect rect) {
+    Path getLeftTopPath(Rect rect) {
       return Path()
         ..moveTo(rect.left, rect.bottom)
         ..lineTo(rect.left, rect.top)
         ..lineTo(rect.right, rect.top);
     }
 
-    return _getLeftTopPath(rect)
-      ..lineTo(
-        rect.right,
-        rect.bottom,
-      )
-      ..lineTo(
-        rect.left,
-        rect.bottom,
-      )
-      ..lineTo(
-        rect.left,
-        rect.top,
-      );
+    return getLeftTopPath(rect)
+      ..lineTo(rect.right, rect.bottom)
+      ..lineTo(rect.left, rect.bottom)
+      ..lineTo(rect.left, rect.top);
   }
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
-    rect = Rect.fromLTRB(
-      0,
-      0,
-      rect.width,
-      rect.height,
-    );
+    rect = Rect.fromLTRB(0, 0, rect.width, rect.height);
     final width = rect.width;
     final height = rect.height;
 
@@ -205,14 +192,8 @@ class CameraMask extends ShapeBorder {
       ..blendMode = BlendMode.dstOut;
 
     canvas
-      ..saveLayer(
-        rect,
-        backgroundPaint,
-      )
-      ..drawRect(
-        rect,
-        backgroundPaint,
-      )
+      ..saveLayer(rect, backgroundPaint)
+      ..drawRect(rect, backgroundPaint)
       ..drawRect(topRect, boxPaint)
       ..restore();
   }

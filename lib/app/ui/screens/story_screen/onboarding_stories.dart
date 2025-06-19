@@ -1,21 +1,19 @@
 import 'dart:developer';
 
-import 'package:auto_route/auto_route.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neuro_wood/app/domain/entities/measure_type.dart';
 import 'package:neuro_wood/app/ui/screens/main/cubit/permission_cubit/main_screen_cubit.dart';
 import 'package:neuro_wood/core/injection.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/theme.dart';
 
 import 'widgets/stories.dart';
 
 class MeasureStoriesTimberCarrierScreen extends StatelessWidget {
-  const MeasureStoriesTimberCarrierScreen({
-    Key? key,
-  }) : super(key: key);
+  const MeasureStoriesTimberCarrierScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +24,13 @@ class MeasureStoriesTimberCarrierScreen extends StatelessWidget {
         if (state.checker == MainScreenStateChecker.checked &&
             cubit.prevState.checker != MainScreenStateChecker.checked) {
           if (state.type != null) {
-            context.router.popAndPush(CameraScreen(type: state.type!));
+            context.pop();
+            context.push('/camera', extra: {'type': state.type!});
           }
         } else if (state.checker == MainScreenStateChecker.noRecognitionLeft &&
             cubit.prevState.checker !=
                 MainScreenStateChecker.noRecognitionLeft) {
-          context.router.pop(MainScreenStateChecker.noRecognitionLeft);
+          context.pop(MainScreenStateChecker.noRecognitionLeft);
         }
       },
       child: OnboradingStories(
@@ -45,9 +44,7 @@ class MeasureStoriesTimberCarrierScreen extends StatelessWidget {
 }
 
 class MeasureStoriesStackScreen extends StatelessWidget {
-  const MeasureStoriesStackScreen({
-    Key? key,
-  }) : super(key: key);
+  const MeasureStoriesStackScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +55,12 @@ class MeasureStoriesStackScreen extends StatelessWidget {
         if (state.checker == MainScreenStateChecker.checked &&
             cubit.prevState.checker != MainScreenStateChecker.checked) {
           if (state.type != null) {
-            context.router.popAndPush(CameraScreen(type: state.type!));
+            context.go('/camera', extra: {'type': state.type!});
           }
         } else if (state.checker == MainScreenStateChecker.noRecognitionLeft &&
             cubit.prevState.checker !=
                 MainScreenStateChecker.noRecognitionLeft) {
-          context.router.pop(MainScreenStateChecker.noRecognitionLeft);
+          context.pop(MainScreenStateChecker.noRecognitionLeft);
         }
       },
       child: OnboradingStories(
@@ -77,28 +74,20 @@ class MeasureStoriesStackScreen extends StatelessWidget {
 }
 
 class ReportStoriesScreen extends StatelessWidget {
-  const ReportStoriesScreen({
-    Key? key,
-  }) : super(key: key);
+  const ReportStoriesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return OnboradingStories(
-      stories: _stories.sublist(20),
-    );
+    return OnboradingStories(stories: _stories.sublist(20));
   }
 }
 
 class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({
-    Key? key,
-  }) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return OnboradingStories(
-      stories: _stories.sublist(0, 5),
-    );
+    return OnboradingStories(stories: _stories.sublist(0, 5));
   }
 }
 
@@ -265,16 +254,16 @@ class OnboradingStories extends StatelessWidget {
   final VoidCallback? lastStoryButtonOnTap;
 
   const OnboradingStories({
-    Key? key,
+    super.key,
     required this.stories,
     this.lastStoryButtonOnTap,
-  }) : super(key: key);
+  });
 
   Future _precache(BuildContext context) async {
     try {
-      await Future.wait(stories.map(
-        (e) => precacheImage(AssetImage(e.imagePath), context),
-      ));
+      await Future.wait(
+        stories.map((e) => precacheImage(AssetImage(e.imagePath), context)),
+      );
     } catch (e) {
       log('ERROR PRECACHE STORIES: $e');
     }
@@ -293,7 +282,7 @@ class OnboradingStories extends StatelessWidget {
       child: Scaffold(
         body: Story(
           overlayColor: NeuroWoodColors.green,
-          onEndStories: context.router.pop,
+          onEndStories: context.pop,
           stories: stories,
           momentDurationGetter: (idx) => stories[idx].duration,
           hasNextButton: false,

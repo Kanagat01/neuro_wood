@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -24,9 +24,9 @@ part 'parameters_measure_state.dart';
 part 'parameters_measure_bloc.freezed.dart';
 
 class ProgressStateCubit extends Cubit<ProgressState> {
-  ProgressStateCubit(
-      {ProgressState progressState = const ProgressState.started()})
-      : super(progressState);
+  ProgressStateCubit({
+    ProgressState progressState = const ProgressState.started(),
+  }) : super(progressState);
 
   set(ProgressState value) => emit(value);
 }
@@ -38,7 +38,7 @@ class ProgressState with _$ProgressState {
       InProgress;
   const factory ProgressState.success() = Success;
   const factory ProgressState.finish(MeasureResultEntityFinish result) = Finish;
-  const factory ProgressState.error(String meaasge) = Error;
+  const factory ProgressState.error(String message) = ProgressError;
 }
 // enum ProgressState {
 //   inProgress,
@@ -82,9 +82,7 @@ class ParametersMeasureBloc
     on<_Load>(_load2);
     on<_Apply>(_apply);
     carNumberController.text = measure.licensePlateText.trim();
-    progressStateCubit = ProgressStateCubit(
-      progressState: _mapState(measure),
-    );
+    progressStateCubit = ProgressStateCubit(progressState: _mapState(measure));
     _subscriptionResult = resultStream?.listen((event) {
       log('LISTEN1: $event');
       if (event != null) {
@@ -101,8 +99,11 @@ class ParametersMeasureBloc
     _subscription = _ticker.tickInk().asBroadcastStream().listen((int v) {
       if (v > 60) {
         _subscription?.cancel();
-        progressStateCubit.set(const ProgressState.error(
-            'Возникла ошибка во время распознавания. Повторите попытку позже'));
+        progressStateCubit.set(
+          const ProgressState.error(
+            'Возникла ошибка во время распознавания. Повторите попытку позже',
+          ),
+        );
       } else {
         _tickerSubject.sink.add(v);
       }
@@ -121,7 +122,8 @@ class ParametersMeasureBloc
     } else if (m is MeasureResultEntityError) {
       _subscription?.cancel();
       return ProgressState.error(
-          m.errorMessage ?? 'Возникла ошибка во время распознавания');
+        m.errorMessage ?? 'Возникла ошибка во время распознавания',
+      );
     } else if (m is MeasureResultEntityFinish) {
       _subscription?.cancel();
       return ProgressState.finish(m);
@@ -134,54 +136,58 @@ class ParametersMeasureBloc
     emit(const ParametersMeasureState.loading());
     final allData = await parametersMeasureRepository.getAllParameters();
 
-    allData.fold(
-      (l) => emit(const ParametersMeasureState.error()),
-      (r) {
-        // builder.baseUrl = r.baseUrl;
-        List<InputSelectAdapterLocation> locations =
-            r.locations.map((e) => InputSelectAdapterLocation(e)).toList();
-        List<InputSelectAdapterSortiment> sortiments =
-            r.sortiment.map((e) => InputSelectAdapterSortiment(e)).toList();
-        List<InputSelectAdapterBread> breads =
-            r.breads.map((e) => InputSelectAdapterBread(e)).toList();
-        List<InputSelectAdapterVehicleType> vehicleTypes = r.vehicleTypes
-            .map((e) => InputSelectAdapterVehicleType(e))
-            .toList();
+    allData.fold((l) => emit(const ParametersMeasureState.error()), (r) {
+      // builder.baseUrl = r.baseUrl;
+      List<InputSelectAdapterLocation> locations = r.locations
+          .map((e) => InputSelectAdapterLocation(e))
+          .toList();
+      List<InputSelectAdapterSortiment> sortiments = r.sortiment
+          .map((e) => InputSelectAdapterSortiment(e))
+          .toList();
+      List<InputSelectAdapterBread> breads = r.breads
+          .map((e) => InputSelectAdapterBread(e))
+          .toList();
+      List<InputSelectAdapterVehicleType> vehicleTypes = r.vehicleTypes
+          .map((e) => InputSelectAdapterVehicleType(e))
+          .toList();
 
-        final _locations = locations.firstWhere((e) => e.canSelect);
-        final _sortiments = sortiments.firstWhere((e) => e.canSelect);
-        final _breads = breads.firstWhere((e) => e.canSelect);
-        builder.location = _locations.value;
-        builder.timberType = _sortiments.value;
-        builder.treeSpecies = [_breads.value];
-        locationValue =
-            SelectorDictionaryCubit<InputSelectAdapterLocation>(_locations)
-              ..stream.listen((event) {
-                builder.location = event?.value;
-              });
-        sortimentValue =
-            SelectorDictionaryCubit<InputSelectAdapterSortiment>(_sortiments)
-              ..stream.listen((event) {
-                builder.timberType = event?.value;
-              });
-        breadValue =
-            MultiSelectorDictionaryCubit<InputSelectAdapterBread>([_breads])
-              ..stream.listen((event) {
-                builder.treeSpecies = event?.map((e) => e.value).toList();
-              });
-        vehicleTypeValue =
-            SelectorDictionaryCubit<InputSelectAdapterVehicleType>(null)
-              ..stream.listen((event) {
-                builder.vehicleType = event?.value;
-              });
-        emit(ParametersMeasureState.loaded(
+      final selectedLocation = locations.firstWhere((e) => e.canSelect);
+      final selectedSortiment = sortiments.firstWhere((e) => e.canSelect);
+      final selectedBread = breads.firstWhere((e) => e.canSelect);
+      builder.location = selectedLocation.value;
+      builder.timberType = selectedSortiment.value;
+      builder.treeSpecies = [selectedBread.value];
+      locationValue =
+          SelectorDictionaryCubit<InputSelectAdapterLocation>(selectedLocation)
+            ..stream.listen((event) {
+              builder.location = event?.value;
+            });
+      sortimentValue =
+          SelectorDictionaryCubit<InputSelectAdapterSortiment>(
+              selectedSortiment,
+            )
+            ..stream.listen((event) {
+              builder.timberType = event?.value;
+            });
+      breadValue =
+          MultiSelectorDictionaryCubit<InputSelectAdapterBread>([selectedBread])
+            ..stream.listen((event) {
+              builder.treeSpecies = event?.map((e) => e.value).toList();
+            });
+      vehicleTypeValue =
+          SelectorDictionaryCubit<InputSelectAdapterVehicleType>(null)
+            ..stream.listen((event) {
+              builder.vehicleType = event?.value;
+            });
+      emit(
+        ParametersMeasureState.loaded(
           locations: locations,
           sortiment: sortiments,
           bread: breads,
           vehicleType: vehicleTypes,
-        ));
-      },
-    );
+        ),
+      );
+    });
   }
 
   _apply(_Apply event, Emitter<ParametersMeasureState> emit) async {
@@ -193,8 +199,9 @@ class ParametersMeasureBloc
       _startPreloader();
       progressStateCubit.set(ProgressState.inProgress(_tickerSubject.stream));
       if (_subscriptionResult == null) {
-        resultStream = parametersMeasureRepository
-            .getStreamMeasurements(measure.measureId);
+        resultStream = parametersMeasureRepository.getStreamMeasurements(
+          measure.measureId,
+        );
         _subscriptionResult = resultStream?.listen((event) {
           log('LISTEN2: $event');
           if (event != null) {
@@ -209,8 +216,11 @@ class ParametersMeasureBloc
         req,
       );
       res.fold(
-        (l) => progressStateCubit.set(const ProgressState.error(
-            'Не удалось сохранить данные. Повторите попытку через несколько секунд')),
+        (l) => progressStateCubit.set(
+          const ProgressState.error(
+            'Не удалось сохранить данные. Повторите попытку через несколько секунд',
+          ),
+        ),
         (r) => null,
       );
     } else {}

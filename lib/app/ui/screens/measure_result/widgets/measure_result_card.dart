@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:neuro_wood/app/domain/entities/mesure_result_entity.dart';
 import 'package:neuro_wood/core/helpers/extensions.dart';
@@ -8,7 +7,7 @@ import 'package:neuro_wood/core/ui/theme.dart';
 class MeasureResultCard extends StatelessWidget {
   final MeasureResultEntityFinish result;
 
-  const MeasureResultCard({Key? key, required this.result}) : super(key: key);
+  const MeasureResultCard({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +26,7 @@ class MeasureResultCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                describeEnum(result.type).tr(),
+                result.type.name.tr(),
                 // result.licensePlateText.toUpperCase(),
                 style: Theme.of(context).textTheme.displayMedium,
               ),
@@ -119,11 +118,7 @@ class MeasureResultCard extends StatelessWidget {
 class _MeasurePropertyBloc extends StatelessWidget {
   final String name;
   final List<MapEntry> values;
-  const _MeasurePropertyBloc({
-    Key? key,
-    required this.name,
-    required this.values,
-  }) : super(key: key);
+  const _MeasurePropertyBloc({required this.name, required this.values});
 
   @override
   Widget build(BuildContext context) {
@@ -150,11 +145,7 @@ class _MeasurePropertyBloc extends StatelessWidget {
 class _MeasurePropertyItem extends StatelessWidget {
   final String name;
   final String value;
-  const _MeasurePropertyItem({
-    Key? key,
-    required this.name,
-    required this.value,
-  }) : super(key: key);
+  const _MeasurePropertyItem({required this.name, required this.value});
 
   @override
   Widget build(BuildContext context) {

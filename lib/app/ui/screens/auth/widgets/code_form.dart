@@ -9,14 +9,14 @@ import 'package:neuro_wood/core/ui/theme.dart';
 
 class CodeForm extends StatelessWidget {
   const CodeForm({
-    Key? key,
+    super.key,
     required this.controller,
     required this.ticker,
     required this.resendCode,
     required this.nextAction,
     // required this.substate,
     required this.sending,
-  }) : super(key: key);
+  });
   final TextEditingController controller;
   // final AuthSubstate substate;
   final bool sending;

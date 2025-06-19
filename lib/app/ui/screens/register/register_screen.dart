@@ -1,21 +1,21 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/ui/screens/register/bloc/checkbox_cubit/checkbox_cubit.dart';
 import 'package:neuro_wood/app/ui/screens/register/bloc/register_bloc/register_bloc.dart';
 import 'package:neuro_wood/app/ui/widgets/on_paste_phone.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_text_input.dart';
 import 'package:neuro_wood/core/injection.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +27,8 @@ class RegisterScreen extends StatelessWidget {
           child: Center(
             child: BlocConsumer<RegisterBloc, RegisterState>(
               listener: (context, state) {
-                state.maybeWhen(
-                  error: (e) {
+                switch (state) {
+                  case RegisterError(:final e):
                     Dialogs.showDialogMessage(
                       title: "thereWasAnErrorTitle".tr(),
                       text: e,
@@ -43,12 +43,12 @@ class RegisterScreen extends StatelessWidget {
                         ),
                       ],
                     );
-                  },
-                  sucess: () {
-                    context.router.replace(const BottomNavigator());
-                  },
-                  orElse: () {},
-                );
+                    break;
+                  case RegisterSuccess():
+                    context.pop();
+                    context.push('/main');
+                    break;
+                }
               },
               buildWhen: (_, __) => true,
               builder: (context, state) {
@@ -132,7 +132,8 @@ class RegisterScreen extends StatelessWidget {
                                 }
                                 return null;
                               },
-                              selectionControls: OnPastePhone().getPlatform(),
+                              contextMenuBuilder: OnPastePhone()
+                                  .getContextMenuBuilder(),
                               hint: '900 000 00 00',
                               keyboardType: TextInputType.number,
                               prefixIcon: Padding(
@@ -187,7 +188,7 @@ class RegisterScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(4.0),
                                     ),
                                     activeColor: Colors.red,
-                                    side: MaterialStateBorderSide.resolveWith(
+                                    side: WidgetStateBorderSide.resolveWith(
                                       (states) => const BorderSide(
                                         width: 1,
                                         color: NeuroWoodColors.gray,
@@ -195,12 +196,11 @@ class RegisterScreen extends StatelessWidget {
                                     ),
                                     checkColor: NeuroWoodColors.green,
                                     splashRadius: 20,
-                                    fillColor:
-                                        MaterialStateProperty.resolveWith((
-                                          Set<MaterialState> states,
-                                        ) {
-                                          return Colors.transparent;
-                                        }),
+                                    fillColor: WidgetStateProperty.resolveWith((
+                                      Set<WidgetState> states,
+                                    ) {
+                                      return Colors.transparent;
+                                    }),
                                     value: state,
                                     onChanged: (bool? v) {
                                       bloc.add(
@@ -226,11 +226,12 @@ class RegisterScreen extends StatelessWidget {
                                       ),
                                       recognizer: TapGestureRecognizer()
                                         ..onTap = () {
-                                          context.router.push(
-                                            PDFReaderScreen(
-                                              pdfPath:
+                                          context.push(
+                                            '/pdf',
+                                            extra: {
+                                              'pdfPath':
                                                   'assets/docs/user_agreement_terms.pdf',
-                                            ),
+                                            },
                                           );
                                         },
                                     ),
@@ -249,13 +250,14 @@ class RegisterScreen extends StatelessWidget {
                               onPressed: s
                                   ? () => bloc.add(const RegisterEvent.send())
                                   : null,
-                              icon: state.maybeWhen(
-                                sending: () => const CupertinoActivityIndicator(
-                                  radius: 10,
-                                  color: NeuroWoodColors.white,
-                                ),
-                                orElse: () => null,
-                              ),
+                              icon: switch (state) {
+                                RegisterSending() =>
+                                  const CupertinoActivityIndicator(
+                                    radius: 10,
+                                    color: NeuroWoodColors.white,
+                                  ),
+                                _ => null,
+                              },
                             );
                           },
                         ),

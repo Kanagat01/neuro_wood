@@ -1,7 +1,7 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/ui/screens/parameters_measure/widgets/input_select.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
@@ -14,11 +14,11 @@ class SelectorScreen extends StatelessWidget {
   final InputSelectAdapter? selectedValue;
   final String label;
   const SelectorScreen({
-    Key? key,
+    super.key,
     required this.values,
     required this.selectedValue,
     required this.label,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +54,7 @@ class SelectorScreen extends StatelessWidget {
                       child: PrimaryButton(
                         text: "nextButton".tr(),
                         onPressed: () {
-                          context.router.pop(state);
+                          context.pop(state);
                         },
                       ),
                     ),
@@ -72,11 +72,11 @@ class MultiSelectorScreen extends StatelessWidget {
   final List<InputSelectAdapter>? selectedValues;
   final String label;
   const MultiSelectorScreen({
-    Key? key,
+    super.key,
     required this.values,
     required this.selectedValues,
     required this.label,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +112,7 @@ class MultiSelectorScreen extends StatelessWidget {
                       child: PrimaryButton(
                         text: "nextButton".tr(),
                         onPressed: () {
-                          context.router.pop(state);
+                          context.pop(state);
                         },
                       ),
                     ),
@@ -131,11 +131,10 @@ class _RadioButton extends StatelessWidget {
   final Function(InputSelectAdapter) onChange;
 
   const _RadioButton({
-    Key? key,
     required this.selectedValue,
     required this.value,
     required this.onChange,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,11 +180,10 @@ class _CheckboxButton extends StatelessWidget {
   final Function(InputSelectAdapter) onChange;
 
   const _CheckboxButton({
-    Key? key,
     required this.selectedValue,
     required this.value,
     required this.onChange,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

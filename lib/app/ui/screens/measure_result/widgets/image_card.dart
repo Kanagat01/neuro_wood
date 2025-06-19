@@ -6,12 +6,12 @@ class ImageCard extends StatelessWidget {
   final VoidCallback onPressed;
   final double width;
   const ImageCard({
-    Key? key,
+    super.key,
     required this.image,
     required this.name,
     required this.onPressed,
     required this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class ImageCard extends StatelessWidget {
               image: DecorationImage(image: image, fit: BoxFit.cover),
             ),
           ),
-          Text(name)
+          Text(name),
         ],
       ),
     );

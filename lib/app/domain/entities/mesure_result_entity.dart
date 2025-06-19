@@ -18,56 +18,38 @@ abstract class MeasureResultEntityBase {
 
 class MeasureResultEntityInProgress extends MeasureResultEntityBase {
   MeasureResultEntityInProgress({
-    required String measureId,
-    required String licensePlateText,
-    required DateTime dateTime,
-    required bool hasFrontData,
-    required MeasureType type,
-  }) : super(
-          measureId: measureId,
-          dateTime: dateTime,
-          hasFrontData: hasFrontData,
-          licensePlateText: licensePlateText,
-          type: type,
-        );
+    required super.measureId,
+    required super.licensePlateText,
+    required super.dateTime,
+    required super.hasFrontData,
+    required super.type,
+  });
 }
 
 class MeasureResultEntityError extends MeasureResultEntityBase {
   final String? errorMessage;
 
   MeasureResultEntityError({
-    required String measureId,
-    required DateTime dateTime,
-    required String licensePlateText,
-    required bool hasFrontData,
-    required MeasureType type,
+    required super.measureId,
+    required super.dateTime,
+    required super.licensePlateText,
+    required super.hasFrontData,
+    required super.type,
     this.errorMessage,
-  }) : super(
-          measureId: measureId,
-          dateTime: dateTime,
-          hasFrontData: hasFrontData,
-          licensePlateText: licensePlateText,
-          type: type,
-        );
+  });
 }
 
 class MeasureResultEntitySucess extends MeasureResultEntityBase {
   final MeasureResultDataEntity data;
 
   MeasureResultEntitySucess({
-    required DateTime dateTime,
-    required String licensePlateText,
-    bool hasFrontData = false,
-    required String measureId,
-    required MeasureType type,
+    required super.dateTime,
+    required super.licensePlateText,
+    super.hasFrontData = false,
+    required super.measureId,
+    required super.type,
     required this.data,
-  }) : super(
-          measureId: measureId,
-          dateTime: dateTime,
-          hasFrontData: hasFrontData,
-          licensePlateText: licensePlateText,
-          type: type,
-        );
+  });
 }
 
 class MeasureResultEntityFinish extends MeasureResultEntitySucess {
@@ -83,9 +65,9 @@ class MeasureResultEntityFinish extends MeasureResultEntitySucess {
   final int? length;
 
   MeasureResultEntityFinish({
-    required String measureId,
-    required DateTime dateTime,
-    required String licensePlateText,
+    required super.measureId,
+    required super.dateTime,
+    required super.licensePlateText,
     this.breed,
     this.breeds,
     required this.woodVolumeCircle,
@@ -93,19 +75,12 @@ class MeasureResultEntityFinish extends MeasureResultEntitySucess {
     required this.location,
     this.length,
     required this.sortiment,
-    required MeasureType type,
-    required MeasureResultDataEntity data,
+    required super.type,
+    required super.data,
     // this.carNumber,
     this.provider,
     this.vehicleType,
-  }) : super(
-          measureId: measureId,
-          dateTime: dateTime,
-          licensePlateText: licensePlateText,
-          hasFrontData: true,
-          type: type,
-          data: data,
-        );
+  }) : super(hasFrontData: true);
 }
 
 abstract class MeasureResultDataEntity {
@@ -136,28 +111,17 @@ abstract class MeasureResultDataEntity {
 
 class MeasureResultDataStackEntity extends MeasureResultDataEntity {
   MeasureResultDataStackEntity({
-    double? kpdCircle,
-    double? kpdElipse,
-    required int count,
-    required double medianHeight,
-    required double medianWidth,
-    required double? woodAreaCircle,
-    required double woodAreaEllipse,
-    double? effectiveArea,
-    required List<LineCoordsEntity> verticalLines,
-    required List<LineCoordsEntity> horizontalLines,
-  }) : super(
-          kpdCircle: kpdCircle,
-          kpdElipse: kpdElipse,
-          count: count,
-          medianHeight: medianHeight,
-          medianWidth: medianWidth,
-          woodAreaCircle: woodAreaCircle,
-          woodAreaEllipse: woodAreaEllipse,
-          effectiveArea: effectiveArea,
-          verticalLines: verticalLines,
-          horizontalLines: horizontalLines,
-        );
+    super.kpdCircle,
+    super.kpdElipse,
+    required super.count,
+    required super.medianHeight,
+    required super.medianWidth,
+    required super.woodAreaCircle,
+    required super.woodAreaEllipse,
+    super.effectiveArea,
+    required super.verticalLines,
+    required super.horizontalLines,
+  });
 }
 
 class MeasureResultDataTimberCarrierEntity extends MeasureResultDataEntity {
@@ -165,30 +129,19 @@ class MeasureResultDataTimberCarrierEntity extends MeasureResultDataEntity {
   final List<MarkupEntity> markup;
 
   MeasureResultDataTimberCarrierEntity({
-    double? kpdCircle,
-    double? kpdElipse,
-    required int count,
-    required double medianHeight,
-    required double medianWidth,
-    required double? woodAreaCircle,
-    required double woodAreaEllipse,
-    double? effectiveArea,
-    required List<LineCoordsEntity> verticalLines,
-    required List<LineCoordsEntity> horizontalLines,
+    super.kpdCircle,
+    super.kpdElipse,
+    required super.count,
+    required super.medianHeight,
+    required super.medianWidth,
+    required super.woodAreaCircle,
+    required super.woodAreaEllipse,
+    super.effectiveArea,
+    required super.verticalLines,
+    required super.horizontalLines,
     required this.sortPercent,
     required this.markup,
-  }) : super(
-          kpdCircle: kpdCircle,
-          kpdElipse: kpdElipse,
-          count: count,
-          medianHeight: medianHeight,
-          medianWidth: medianWidth,
-          woodAreaCircle: woodAreaCircle,
-          woodAreaEllipse: woodAreaEllipse,
-          effectiveArea: effectiveArea,
-          verticalLines: verticalLines,
-          horizontalLines: horizontalLines,
-        );
+  });
 }
 
 class CoordEntity {

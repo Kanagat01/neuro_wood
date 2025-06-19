@@ -6,16 +6,15 @@ part of 'measure_limit_cubit.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_MeasureLimitState _$$_MeasureLimitStateFromJson(Map<String, dynamic> json) =>
-    _$_MeasureLimitState(
-      totalCount: json['totalCount'] as int,
-      leftCount: json['leftCount'] as int,
+_MeasureLimitState _$MeasureLimitStateFromJson(Map<String, dynamic> json) =>
+    _MeasureLimitState(
+      totalCount: (json['totalCount'] as num).toInt(),
+      leftCount: (json['leftCount'] as num).toInt(),
       showBlock: json['showBlock'] as bool,
       isFree: json['isFree'] as bool,
     );
 
-Map<String, dynamic> _$$_MeasureLimitStateToJson(
-        _$_MeasureLimitState instance) =>
+Map<String, dynamic> _$MeasureLimitStateToJson(_MeasureLimitState instance) =>
     <String, dynamic>{
       'totalCount': instance.totalCount,
       'leftCount': instance.leftCount,

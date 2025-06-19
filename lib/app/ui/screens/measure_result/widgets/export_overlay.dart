@@ -9,11 +9,11 @@ class ExportOverlay extends StatelessWidget {
   final bool enabled;
   final Color bgColor;
   const ExportOverlay({
-    Key? key,
+    super.key,
     required this.child,
     this.bgColor = const Color(0x88000000),
     required this.enabled,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,22 +21,19 @@ class ExportOverlay extends StatelessWidget {
       children: [
         child,
         if (enabled)
-          WillPopScope(
-            onWillPop: () => Future.value(false),
+          PopScope(
+            canPop: false,
             child: Container(
               alignment: Alignment.center,
               color: bgColor,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                 child: const Center(
-                  child: RotatingLogo(
-                    color: NeuroWoodColors.white,
-                    size: 116,
-                  ),
+                  child: RotatingLogo(color: NeuroWoodColors.white, size: 116),
                 ),
               ),
             ),
-          )
+          ),
       ],
     );
   }

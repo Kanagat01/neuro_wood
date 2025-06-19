@@ -13,19 +13,17 @@ class CameraPreviewWidget extends StatelessWidget {
   final Function(TapDownDetails, BoxConstraints) onViewFinderTap;
   final Stream<InclineMeasure>? streamIncline;
   const CameraPreviewWidget({
-    Key? key,
+    super.key,
     required this.cameraController,
     this.streamIncline,
     required this.onViewFinderTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     if (cameraController == null ||
         !(cameraController?.value.isInitialized ?? false)) {
-      return Container(
-        color: Colors.black87,
-      );
+      return Container(color: Colors.black87);
     }
     var camera = cameraController!.value;
     return LayoutBuilder(
@@ -45,7 +43,8 @@ class CameraPreviewWidget extends StatelessWidget {
         final cameraRatio = previewW / previewH;
         // final cameraRatio = ph < pw ? ph / pw : pw / ph;
 
-        final scale = math.max(deviceRatio, cameraRatio) /
+        final scale =
+            math.max(deviceRatio, cameraRatio) /
             math.min(deviceRatio, cameraRatio);
 
         final newConstraints = BoxConstraints(
@@ -68,9 +67,13 @@ class CameraPreviewWidget extends StatelessWidget {
                     ? ShapeDecoration(
                         shape: CameraMask(
                           constraints: newConstraints,
-                          maskPadding:
-                              const EdgeInsets.fromLTRB(24, 80, 24, 50),
-                          overlayColor: Colors.black.withOpacity(0.5),
+                          maskPadding: const EdgeInsets.fromLTRB(
+                            24,
+                            80,
+                            24,
+                            50,
+                          ),
+                          overlayColor: Colors.black.withValues(alpha: 0.5),
                           borderColor: NeuroWoodColors.green,
                         ),
                       )
@@ -78,8 +81,8 @@ class CameraPreviewWidget extends StatelessWidget {
                         gradient: RadialGradient(
                           radius: 0.8,
                           colors: [
-                            Colors.black.withOpacity(0),
-                            Colors.black.withOpacity(0.6),
+                            Colors.black.withValues(alpha: 0),
+                            Colors.black.withValues(alpha: 0.6),
                           ],
                           stops: const [0, 81],
                         ),
@@ -98,6 +101,7 @@ class CameraPreviewWidget extends StatelessWidget {
       },
     );
   }
+
   // @override
   // Widget build(BuildContext context) {
   //   if (cameraController == null ||
@@ -137,15 +141,15 @@ class CameraPreviewWidget extends StatelessWidget {
   //                             constraints: constraints,
   //                             maskPadding:
   //                                 const EdgeInsets.fromLTRB(24, 80, 24, 50),
-  //                             overlayColor: Colors.black.withOpacity(0.5),
+  //                             overlayColor: Colors.black.withValues(alpha: 0.5),
   //                             borderColor: NeuroWoodColors.green,
   //                           ),
   //                         )
   //                       : BoxDecoration(
   //                           gradient: RadialGradient(
   //                             colors: [
-  //                               Colors.black.withOpacity(0.2),
-  //                               Colors.black.withOpacity(1),
+  //                               Colors.black.withValues(alpha: 0.2),
+  //                               Colors.black,
   //                             ],
   //                           ),
   //                         ),
@@ -168,10 +172,7 @@ class CameraPreviewWidget extends StatelessWidget {
 
 class ImagePreview extends StatelessWidget {
   final XFile imageFile;
-  const ImagePreview({
-    Key? key,
-    required this.imageFile,
-  }) : super(key: key);
+  const ImagePreview({super.key, required this.imageFile});
 
   @override
   Widget build(BuildContext context) {
@@ -191,11 +192,11 @@ class ImagePreview extends StatelessWidget {
                 shape: CameraMask(
                   constraints: constraints,
                   maskPadding: const EdgeInsets.fromLTRB(24, 80, 24, 50),
-                  overlayColor: Colors.black.withOpacity(0.5),
+                  overlayColor: Colors.black.withValues(alpha: 0.5),
                   borderColor: NeuroWoodColors.green,
                 ),
               ),
-            )
+            ),
           ],
         );
       },

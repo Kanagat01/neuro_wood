@@ -8,7 +8,9 @@ part 'subscription_business.freezed.dart';
 part 'subscription_business.g.dart';
 
 @freezed
-class SubscriptionBusiness with _$SubscriptionBusiness {
+abstract class SubscriptionBusiness with _$SubscriptionBusiness {
+  const SubscriptionBusiness._();
+
   factory SubscriptionBusiness({
     @JsonKey(name: 'is_default') @Default(false) bool isDefault,
     required String name,

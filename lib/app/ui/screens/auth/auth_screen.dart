@@ -1,14 +1,14 @@
 // import 'dart:developer';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/ui/widgets/on_paste_phone.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_text_input.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
@@ -22,16 +22,20 @@ class AuthScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        AuthBloc bloc = context.read<AuthBloc>();
-        return bloc.state.maybeMap(
-          inputCode: (_) {
-            bloc.add(const AuthEvent.back());
-            return Future.value(false);
-          },
-          orElse: () => Future.value(true),
-        );
+    AuthBloc bloc = context.read<AuthBloc>();
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (bool didPop, bool? result) async {
+        if (!didPop) {
+          switch (bloc.state) {
+            case AuthInputCode():
+              bloc.add(const AuthEvent.back());
+              break;
+            default:
+              Navigator.of(context).pop();
+              break;
+          }
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -40,8 +44,8 @@ class AuthScreen extends StatelessWidget {
             listenWhen: (s1, s2) => true,
             listener: ((context, state) {
               handleError(AuthSubstate substate) {
-                substate.maybeWhen(
-                  error: (message, _) {
+                switch (substate) {
+                  case AuthSubError(:final message):
                     Dialogs.showDialogMessage(
                       title: "thereWasAnErrorTitle".tr(),
                       text: message,
@@ -56,20 +60,29 @@ class AuthScreen extends StatelessWidget {
                         ),
                       ],
                     );
-                  },
-                  orElse: () {},
-                );
+                    break;
+                }
               }
 
-              state.maybeWhen(
-                inputCode: (handleError),
-                inputPhone: (s, _, __) => handleError(s),
-                successAuth: () =>
-                    context.router.replace(const RegisterScreen()),
-                successRegister: () =>
-                    context.router.replace(const BottomNavigator()),
-                orElse: () {},
-              );
+              switch (state) {
+                case AuthInputCode(:final substate):
+                  handleError(substate);
+                  break;
+
+                case AuthInputPhone(:final substate):
+                  handleError(substate);
+                  break;
+
+                case SuccessAuth():
+                  context.pop();
+                  context.push('/register');
+                  break;
+
+                case SuccessRegister():
+                  context.pop();
+                  context.push('/main');
+                  break;
+              }
             }),
             builder: (context, state) {
               AuthBloc bloc = context.read<AuthBloc>();
@@ -83,62 +96,21 @@ class AuthScreen extends StatelessWidget {
                         children: [
                           const Logo(),
                           const SizedBox(height: 32),
-                          state.maybeWhen(
-                            inputPhone:
-                                (
-                                  AuthSubstate substate,
-                                  bool validate,
-                                  bool enableNextBtn,
-                                ) {
-                                  return PhoneForm(
-                                    validate: validate,
-                                    substate: substate,
-                                    controller: bloc.phoneController,
-                                    nextAction: enableNextBtn
-                                        ? () => bloc.add(
-                                            const AuthEvent.sendPhone(),
-                                          )
-                                        : null,
-                                  );
-                                },
-                            inputCode: (AuthSubstate substate) {
-                              return CodeForm(
-                                sending: substate.maybeWhen(
-                                  orElse: () => false,
-                                  sending: () => true,
-                                ),
-                                // substate: substate,
-                                controller: bloc.codeController,
-                                ticker: bloc.ticker,
-                                resendCode: () =>
-                                    bloc.add(const AuthEvent.resendCode()),
-                                nextAction: () =>
-                                    bloc.add(const AuthEvent.sendCode()),
-                              );
-                            },
-                            orElse: () {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            },
-                          ),
+                          _buildAuthForm(state, bloc),
                         ],
                       ),
                     ),
                   ),
-                  state.maybeWhen(
-                    inputCode: (_) {
-                      return Positioned(
-                        top: 23,
-                        left: 0,
-                        child: IconButton(
-                          icon: const Icon(NeuroWoodIcons.arrow_left),
-                          onPressed: () => bloc.add(const AuthEvent.back()),
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox(),
-                  ),
+                  (state is AuthInputCode)
+                      ? Positioned(
+                          top: 23,
+                          left: 0,
+                          child: IconButton(
+                            icon: const Icon(NeuroWoodIcons.arrowLeft),
+                            onPressed: () => bloc.add(const AuthEvent.back()),
+                          ),
+                        )
+                      : const SizedBox(),
                 ],
               );
             },
@@ -149,14 +121,43 @@ class AuthScreen extends StatelessWidget {
   }
 }
 
+Widget _buildAuthForm(AuthState state, AuthBloc bloc) {
+  return switch (state) {
+    AuthInputPhone(
+      :final substate,
+      :final validateForm,
+      :final enableNextBtn,
+    ) =>
+      PhoneForm(
+        validate: validateForm,
+        substate: substate,
+        controller: bloc.phoneController,
+        nextAction: enableNextBtn
+            ? () => bloc.add(const AuthEvent.sendPhone())
+            : null,
+      ),
+    AuthInputCode(:final substate) => CodeForm(
+      sending: switch (substate) {
+        AuthSubSending() => true,
+        _ => false,
+      },
+      controller: bloc.codeController,
+      ticker: bloc.ticker,
+      resendCode: () => bloc.add(const AuthEvent.resendCode()),
+      nextAction: () => bloc.add(const AuthEvent.sendCode()),
+    ),
+    _ => const Center(child: CircularProgressIndicator()),
+  };
+}
+
 class PhoneForm extends StatelessWidget {
   const PhoneForm({
-    Key? key,
+    super.key,
     required this.controller,
     required this.substate,
     required this.validate,
     this.nextAction,
-  }) : super(key: key);
+  });
   final TextEditingController controller;
   final AuthSubstate substate;
   final VoidCallback? nextAction;
@@ -172,12 +173,12 @@ class PhoneForm extends StatelessWidget {
         children: [
           PrimaryTextInput(
             validate: validate,
-            readOnly: substate.maybeWhen(
-              orElse: () => false,
-              sending: () => true,
-            ),
+            readOnly: switch (substate) {
+              AuthSubSending() => true,
+              _ => false,
+            },
             label: "phoneLabel".tr(),
-            selectionControls: OnPastePhone().getPlatform(),
+            contextMenuBuilder: OnPastePhone().getContextMenuBuilder(),
             validator: (String? s) {
               String value = s?.replaceAll(RegExp(r'[^0-9]'), '') ?? '';
               if (value.length < 10) return "incorrectPhoneNumberValidate".tr();
@@ -200,17 +201,17 @@ class PhoneForm extends StatelessWidget {
           const SizedBox(height: 24),
           PrimaryButton(
             text: "nextButton".tr(),
-            onPressed: substate.maybeWhen(
-              sending: () => () {},
-              orElse: () => nextAction,
-            ),
-            icon: substate.maybeWhen(
-              sending: () => const CupertinoActivityIndicator(
+            onPressed: switch (substate) {
+              AuthSubSending() => () {},
+              _ => nextAction,
+            },
+            icon: switch (substate) {
+              AuthSubSending() => const CupertinoActivityIndicator(
                 radius: 10,
                 color: NeuroWoodColors.white,
               ),
-              orElse: () => null,
-            ),
+              _ => null,
+            },
           ),
         ],
       ),

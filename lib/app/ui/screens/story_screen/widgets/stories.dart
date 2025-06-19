@@ -1,7 +1,8 @@
-// import 'package:auto_route/auto_route.dart';
-import 'package:auto_route/auto_route.dart';
+//
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
 import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
@@ -16,8 +17,13 @@ typedef MomentDurationGetter = Duration Function(int index);
 /// Builder function that accepts current build context, moment index,
 /// moment progress and gap between each segment and returns widget for segment
 ///
-typedef ProgressSegmentBuilder = Widget Function(
-    BuildContext context, int index, double progress, double gap);
+typedef ProgressSegmentBuilder =
+    Widget Function(
+      BuildContext context,
+      int index,
+      double progress,
+      double gap,
+    );
 
 ///
 /// Widget that allows you to use stories mechanism in your apps
@@ -46,7 +52,7 @@ typedef ProgressSegmentBuilder = Widget Function(
 ///
 class Story extends StatefulWidget {
   const Story({
-    Key? key,
+    super.key,
     required this.stories,
     required this.momentDurationGetter,
     required this.onEndStories,
@@ -61,11 +67,10 @@ class Story extends StatefulWidget {
     this.lastStoryButtonOnTap,
     required this.overlayColor,
     this.disableSkip = false,
-  })  : assert(momentSwitcherFraction >= 0),
-        assert(momentSwitcherFraction < double.infinity),
-        assert(progressSegmentGap >= 0),
-        assert(momentSwitcherFraction < double.infinity),
-        super(key: key);
+  }) : assert(momentSwitcherFraction >= 0),
+       assert(momentSwitcherFraction < double.infinity),
+       assert(progressSegmentGap >= 0),
+       assert(momentSwitcherFraction < double.infinity);
 
   final List<StoryItem> stories;
 
@@ -120,10 +125,10 @@ class Story extends StatefulWidget {
   final double? topOffset;
 
   @override
-  _StoryState createState() => _StoryState();
+  StoryState createState() => StoryState();
 }
 
-class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
+class StoryState extends State<Story> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late int _currentIdx;
   int? _timeStampTap;
@@ -223,14 +228,15 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
   void initState() {
     _currentIdx = widget.startAt;
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.momentDurationGetter(_currentIdx),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _switchToNextOrFinish();
-        }
-      });
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: widget.momentDurationGetter(_currentIdx),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _switchToNextOrFinish();
+          }
+        });
 
     _controller.forward();
 
@@ -253,28 +259,27 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
     int index,
     double progress,
     double gap,
-  ) =>
-      Container(
-        height: 4.0,
-        margin: EdgeInsets.only(
-          left: index == 0 ? 0 : gap / 2,
-          right: index == widget.stories.length - 1 ? 0 : gap / 2,
-        ),
+  ) => Container(
+    height: 4.0,
+    margin: EdgeInsets.only(
+      left: index == 0 ? 0 : gap / 2,
+      right: index == widget.stories.length - 1 ? 0 : gap / 2,
+    ),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFFFF).withValues(alpha: 0.4),
+      borderRadius: BorderRadius.circular(4.0),
+    ),
+    child: FractionallySizedBox(
+      alignment: Alignment.centerLeft,
+      widthFactor: progress,
+      child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF).withOpacity(0.4),
           borderRadius: BorderRadius.circular(4.0),
+          color: const Color(0xffffffff),
         ),
-        child: FractionallySizedBox(
-          alignment: Alignment.centerLeft,
-          widthFactor: progress,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4.0),
-              color: const Color(0xffffffff),
-            ),
-          ),
-        ),
-      );
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -295,10 +300,10 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
             end: Alignment.bottomCenter,
             stops: const [0, .33, .54, 1],
             colors: [
-              Colors.black.withOpacity(.6),
-              Colors.black.withOpacity(0),
-              Colors.black.withOpacity(.2),
-              Colors.black.withOpacity(.8),
+              Colors.black.withValues(alpha: .6),
+              Colors.black.withValues(alpha: 0),
+              Colors.black.withValues(alpha: .2),
+              Colors.black.withValues(alpha: .8),
             ],
           ),
         ),
@@ -320,45 +325,39 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
                 children: [
                   Row(
                     children: <Widget>[
-                      ...List.generate(
-                        widget.stories.length,
-                        (idx) {
-                          return Expanded(
-                            flex: idx == _currentIdx ? 4 : 1,
-                            child: idx == _currentIdx
-                                ? AnimatedBuilder(
-                                    animation: _controller,
-                                    builder: (context, _) {
-                                      return _storyProgress(
-                                        context,
-                                        idx,
-                                        _controller.value,
-                                        widget.progressSegmentGap,
-                                      );
-                                    },
-                                  )
-                                : _storyProgress(
-                                    context,
-                                    idx,
-                                    idx < _currentIdx ? 1.0 : 0.0,
-                                    widget.progressSegmentGap,
-                                  ),
-                          );
-                        },
-                      )
+                      ...List.generate(widget.stories.length, (idx) {
+                        return Expanded(
+                          flex: idx == _currentIdx ? 4 : 1,
+                          child: idx == _currentIdx
+                              ? AnimatedBuilder(
+                                  animation: _controller,
+                                  builder: (context, _) {
+                                    return _storyProgress(
+                                      context,
+                                      idx,
+                                      _controller.value,
+                                      widget.progressSegmentGap,
+                                    );
+                                  },
+                                )
+                              : _storyProgress(
+                                  context,
+                                  idx,
+                                  idx < _currentIdx ? 1.0 : 0.0,
+                                  widget.progressSegmentGap,
+                                ),
+                        );
+                      }),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: context.router.pop,
+                        onTap: context.pop,
                         child: const Padding(
                           padding: EdgeInsets.only(top: 12),
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.white,
-                          ),
+                          child: Icon(Icons.close, color: Colors.white),
                         ),
                       ),
                     ],
@@ -377,22 +376,20 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
                       ),
                     ),
                     if (widget.hasNextButton) ...[
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      const SizedBox(height: 20),
                       PrimaryButton(
                         key: _buttonKey,
                         text: isNotLastStory
                             ? "nextButtonStory".tr()
                             : "startButtonStory".tr(),
                         icon: isNotLastStory
-                            ? const Icon(NeuroWoodIcons.arrow_right)
+                            ? const Icon(NeuroWoodIcons.arrowRight)
                             : null,
                         primaryColor: isNotLastStory
-                            ? Colors.white.withOpacity(.3)
+                            ? Colors.white.withValues(alpha: .3)
                             : NeuroWoodColors.green,
                         onPressed: _switchToNextOrFinish,
-                      )
+                      ),
                     ],
                   ] else ...[
                     Expanded(
@@ -402,7 +399,8 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
                             top: 44,
                             left: 0,
                             right: 0,
-                            bottom: widget.lastStoryButtonOnTap != null &&
+                            bottom:
+                                widget.lastStoryButtonOnTap != null &&
                                     !isNotLastStory
                                 ? 122
                                 : 50,
@@ -431,9 +429,7 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
                                 ),
                                 if (widget.lastStoryButtonOnTap != null &&
                                     !isNotLastStory) ...[
-                                  const SizedBox(
-                                    height: 22,
-                                  ),
+                                  const SizedBox(height: 22),
                                   PrimaryButton(
                                     key: _buttonKey,
                                     text: 'Измерить древесину',
@@ -448,7 +444,7 @@ class _StoryState extends State<Story> with SingleTickerProviderStateMixin {
                         ],
                       ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),

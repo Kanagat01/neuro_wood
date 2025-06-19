@@ -31,7 +31,8 @@ class NWRepository implements INWRepository {
 
   @override
   Future<Either<ServerFailure, MeasureResponse>> processImage(
-      ImageRecognizeRequest request) async {
+    ImageRecognizeRequest request,
+  ) async {
     final baseUrls = <String>[];
     final urlEither = await firebaseDataSource.getSendUrls();
     urlEither.fold((l) => null, (r) {
@@ -51,7 +52,7 @@ class NWRepository implements INWRepository {
 
     final body = request.toRequest(firebaseDataSource.user!.uid);
     // final image = await _compressFile(request.image);
-    NetworkRequest _req = NetworkRequest(
+    NetworkRequest req = NetworkRequest(
       path: 'files/',
       baseUrl: baseUrls,
       method: RestMethod.post,
@@ -68,20 +69,23 @@ class NWRepository implements INWRepository {
     );
 
     try {
-      final result = await networkService.sendRequest(_req);
+      final result = await networkService.sendRequest(req);
       if (result.body is Map) {
         try {
           Map<String, dynamic> body = result.body;
           if (body.containsKey('recognition_id')) {
-            final stream =
-                firebaseDataSource.subscribeOnMeasure(body['recognition_id']);
-            return right(MeasureResponse(
-              measureId: body['recognition_id'],
-              licensePlateText: body['license_plate_text'] != null
-                  ? body['license_plate_text']?.trim() ?? ''
-                  : '',
-              measureStream: stream,
-            ));
+            final stream = firebaseDataSource.subscribeOnMeasure(
+              body['recognition_id'],
+            );
+            return right(
+              MeasureResponse(
+                measureId: body['recognition_id'],
+                licensePlateText: body['license_plate_text'] != null
+                    ? body['license_plate_text']?.trim() ?? ''
+                    : '',
+                measureStream: stream,
+              ),
+            );
           }
           // var format = DateFormat('MM:dd:y_H:mm:ss');
           // body['date_time'] = format.parse(body['measure_id'], true).toLocal();
@@ -89,10 +93,7 @@ class NWRepository implements INWRepository {
           // return right(res);
         } catch (e, s) {
           await firebaseDataSource.crashlytics.recordErrorWithLogs(
-            logs: [
-              'request - ${_req.toLog()}',
-              'response - ${result.body}',
-            ],
+            logs: ['request - ${req.toLog()}', 'response - ${result.body}'],
             exception: e,
             stack: s,
             reason: 'Not valid response',
@@ -101,32 +102,33 @@ class NWRepository implements INWRepository {
         }
       }
       await firebaseDataSource.crashlytics.recordErrorWithLogs(
-        logs: [
-          'request - ${_req.toLog()}',
-          'response - ${result.body}',
-        ],
+        logs: ['request - ${req.toLog()}', 'response - ${result.body}'],
         exception: 'Invalid response format',
       );
       return left(ServerFailure(ServerFailureCode.parseResponseError));
     } on NetworkError catch (e, _) {
-      await firebaseDataSource.crashlytics.log('request - ${_req.toLog()}');
+      await firebaseDataSource.crashlytics.log('request - ${req.toLog()}');
       if (e.code == 404) {
-        await firebaseDataSource.crashlytics
-            .recordError(exception: e, reason: 'Number not recognized');
+        await firebaseDataSource.crashlytics.recordError(
+          exception: e,
+          reason: 'Number not recognized',
+        );
         return left(ServerFailure(ServerFailureCode.uknownNumber));
       } else if (e.code != null) {
-        await firebaseDataSource.crashlytics
-            .recordError(exception: e.error, reason: 'Server error');
+        await firebaseDataSource.crashlytics.recordError(
+          exception: e.error,
+          reason: 'Server error',
+        );
         return left(ServerFailure(ServerFailureCode.serverError));
       }
-      await firebaseDataSource.crashlytics
-          .recordError(exception: e.error, reason: 'Sending error');
+      await firebaseDataSource.crashlytics.recordError(
+        exception: e.error,
+        reason: 'Sending error',
+      );
       return left(ServerFailure(ServerFailureCode.sendError));
     } catch (e, s) {
       await firebaseDataSource.crashlytics.recordErrorWithLogs(
-        logs: [
-          'request - ${_req.toLog()}',
-        ],
+        logs: ['request - ${req.toLog()}'],
         exception: e,
         stack: s,
         reason: 'Unknown error',

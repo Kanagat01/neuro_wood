@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:neuro_wood/core/services/network/network_response.dart';
 import 'network_error.dart';
 import 'network_request.dart';
@@ -27,12 +26,13 @@ class NetworkService {
       log('║ request.method ${request.method}');
       log('╚═══════════════════════───');
       _dio.options.baseUrl = request.baseUrl.first;
-      _dio.options.sendTimeout = 90 * 1000;
+      _dio.options.sendTimeout = const Duration(seconds: 90);
       FormData data = FormData.fromMap(request.body ?? {});
 
       if (request.file != null) {
         data.files.add(
-            MapEntry('file', await MultipartFile.fromFile(request.file!.path)));
+          MapEntry('file', await MultipartFile.fromFile(request.file!.path)),
+        );
         if (data.files.isEmpty) {
           throw NetworkError(error: 'Failed to attach image');
         }
@@ -87,9 +87,9 @@ class NetworkService {
         body: r.data,
         code: r.statusCode!,
       );
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       if (((e.response?.statusCode ?? 0) >= 500 && request.hasNextUrl) ||
-          (e.type == DioErrorType.other &&
+          (e.type == DioExceptionType.unknown &&
               e.error is SocketException &&
               (e.error as SocketException).message == "Connection refused")) {
         return sendRequest(request.nextUrl());
@@ -111,12 +111,13 @@ extension NetworkRequestToDio on NetworkRequest {
     FormData data = FormData.fromMap(body ?? {});
 
     if (file != null) {
-      data.files
-          .add(MapEntry('file', await MultipartFile.fromFile(file!.path)));
+      data.files.add(
+        MapEntry('file', await MultipartFile.fromFile(file!.path)),
+      );
     }
 
     return RequestOptions(
-      method: describeEnum(method),
+      method: method.name,
       path: path,
       headers: headers,
       queryParameters: queryParams,

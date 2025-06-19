@@ -1,11 +1,11 @@
-import 'package:auto_route/auto_route.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:neuro_wood/app/domain/entities/measure_type.dart';
 import 'package:neuro_wood/app/ui/screens/main/cubit/permission_cubit/main_screen_cubit.dart';
 import 'package:neuro_wood/core/injection.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 
 import 'package:neuro_wood/core/ui/theme.dart';
@@ -18,7 +18,7 @@ import 'widgets/measurement_counter.dart';
 import 'widgets/rules_item.dart';
 
 class MainScreen extends StatelessWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class MainScreen extends StatelessWidget {
             context.read<MainScreenCubit>().prevState.checker !=
                 MainScreenStateChecker.checked) {
           if (state.type != null) {
-            context.router.push(MeasureOnboardingScreen(type: state.type!));
+            context.push('/measure-onboarding', extra: {'type': state.type!});
           }
         } else if (state.checker == MainScreenStateChecker.noRecognitionLeft &&
             context.read<MainScreenCubit>().prevState.checker !=
@@ -120,7 +120,7 @@ class MainScreen extends StatelessWidget {
               //     if (state == MainScreenState.checked &&
               //         context.read<MainScreenCubit>().prevState !=
               //             MainScreenState.checked) {
-              //       context.router.push(const MeasureOnboardingScreen());
+              //       context.push('/measure-onboarding', extra: {'type': state.type!});
               //     }
               //   },
               //   builder: (context, state) {
@@ -167,16 +167,11 @@ class MainScreen extends StatelessWidget {
     Function(BuildContext)? fallback,
     BuildContext context,
   ) async {
-    launchUrl(uri)
-        .then((value) {
-          if (fallback != null && !value) {
-            fallback(context);
-          }
-        })
-        .catchError((_) {
-          if (fallback != null) {
-            fallback(context);
-          }
-        });
+    final shouldFallback = await launchUrl(uri);
+    if (!context.mounted) return;
+
+    if (fallback != null && !shouldFallback) {
+      fallback(context);
+    }
   }
 }

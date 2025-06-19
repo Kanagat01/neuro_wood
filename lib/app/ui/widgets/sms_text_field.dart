@@ -7,7 +7,7 @@ class SmsTextField extends StatelessWidget {
   final String label;
   final String? hint;
   const SmsTextField({
-    Key? key,
+    super.key,
     this.controller,
     this.prefixIcon,
     this.hint,
@@ -20,7 +20,7 @@ class SmsTextField extends StatelessWidget {
     this.textAlign = TextAlign.start,
     this.autovalidateMode,
     this.maxLength,
-  }) : super(key: key);
+  });
 
   final TextEditingController? controller;
   final Widget? prefixIcon;

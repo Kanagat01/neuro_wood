@@ -13,7 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'cubit/subscribtions_cubit.dart';
 
 class Subscriptions extends StatefulWidget {
-  const Subscriptions({Key? key}) : super(key: key);
+  const Subscriptions({super.key});
 
   @override
   State<Subscriptions> createState() => _SubscriptionsState();
@@ -56,10 +56,12 @@ class _SubscriptionsState extends State<Subscriptions> {
       body: BlocBuilder<SubscribtionsCubit, SubscribtionsState>(
         bloc: cubit,
         builder: (context, state) {
-          return state.when(
-            initial: () => const SizedBox(),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            loaded: (tariffs) {
+          switch (state) {
+            case SubscribtionsInitial():
+              return const SizedBox();
+            case SubscribtionsLoading():
+              return const Center(child: CircularProgressIndicator());
+            case SubscribtionsLoaded():
               // return ListView.separated(
               //   primary: true,
               //   padding: const EdgeInsets.all(16),
@@ -76,7 +78,9 @@ class _SubscriptionsState extends State<Subscriptions> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   CarouselSlider(
-                    items: tariffs.map((e) => TariffItem(tariff: e)).toList(),
+                    items: state.tariffs
+                        .map((e) => TariffItem(tariff: e))
+                        .toList(),
                     options: CarouselOptions(
                       initialPage: 1,
                       height: 350,
@@ -97,7 +101,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: List.generate(
-                          tariffs.length,
+                          state.tariffs.length,
                           (index) => Container(
                             width: 10,
                             height: 10,
@@ -129,9 +133,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                   ),
                 ],
               );
-            },
-            error: () => Center(child: Text("thereWasAnErrorTitle".tr())),
-          );
+            case SubscribtionsError():
+              return Center(child: Text("thereWasAnErrorTitle".tr()));
+            default:
+              return Center(child: Text("thereWasAnErrorTitle".tr()));
+          }
         },
       ),
     );
@@ -140,7 +146,7 @@ class _SubscriptionsState extends State<Subscriptions> {
 
 class TariffItem extends StatelessWidget {
   final TariffEntity tariff;
-  const TariffItem({Key? key, required this.tariff}) : super(key: key);
+  const TariffItem({super.key, required this.tariff});
 
   @override
   Widget build(BuildContext context) {
@@ -201,11 +207,9 @@ class TariffItem extends StatelessWidget {
               // textAlign: TextAlign.center,
             ),
           FeatureRow(feature: tariff.woodCount, hasFeature: true),
-          ...tariff.fetures
-              .map(
-                (e) => FeatureRow(feature: e.feature, hasFeature: e.hasFeature),
-              )
-              .toList(),
+          ...tariff.fetures.map(
+            (e) => FeatureRow(feature: e.feature, hasFeature: e.hasFeature),
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -266,8 +270,11 @@ final List<LaunchAction> _actionsMenu = [
 class FeatureRow extends StatelessWidget {
   final String feature;
   final bool hasFeature;
-  const FeatureRow({Key? key, required this.feature, required this.hasFeature})
-    : super(key: key);
+  const FeatureRow({
+    super.key,
+    required this.feature,
+    required this.hasFeature,
+  });
 
   @override
   Widget build(BuildContext context) {

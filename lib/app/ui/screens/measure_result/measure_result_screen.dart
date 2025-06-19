@@ -1,18 +1,18 @@
 import 'dart:io';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/domain/entities/measure_result_image_entity.dart';
 import 'package:neuro_wood/app/domain/entities/mesure_result_entity.dart';
 import 'package:neuro_wood/app/ui/screens/measure_result/cubit/report_saver/report_saver_cubit.dart';
 import 'package:neuro_wood/app/ui/widgets/leading_button.dart';
 import 'package:neuro_wood/app/ui/widgets/primary_button.dart';
 import 'package:neuro_wood/core/injection.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 import 'package:share_plus/share_plus.dart';
@@ -22,10 +22,7 @@ import 'widgets/image_card.dart';
 import 'widgets/measure_result_card.dart';
 
 class MeasureResultScreen extends StatefulWidget {
-  const MeasureResultScreen({
-    Key? key,
-    required this.result,
-  }) : super(key: key);
+  const MeasureResultScreen({super.key, required this.result});
   final MeasureResultEntityFinish result;
 
   @override
@@ -39,35 +36,28 @@ class _MeasureResultScreenState extends State<MeasureResultScreen> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => getIt.get<ImageLoaderCubit>()..load(widget.result, screenWidth),
+          create: (context) =>
+              getIt.get<ImageLoaderCubit>()..load(widget.result, screenWidth),
         ),
-        BlocProvider(
-          create: (context) => getIt.get<ReportBuilderCubit>(),
-        ),
-        BlocProvider(
-          create: (context) => getIt.get<ReportSaverCubit>(),
-        ),
+        BlocProvider(create: (context) => getIt.get<ReportBuilderCubit>()),
+        BlocProvider(create: (context) => getIt.get<ReportSaverCubit>()),
       ],
-      child: _MeasureResultScreen(
-        result: widget.result,
-      ),
+      child: _MeasureResultScreen(result: widget.result),
     );
   }
 }
 
 class _MeasureResultScreen extends StatelessWidget {
-  const _MeasureResultScreen({
-    Key? key,
-    required this.result,
-  }) : super(key: key);
-
+  const _MeasureResultScreen({required this.result});
   final MeasureResultEntityFinish result;
 
-  _shareFile(String file) async {
-    await Share.shareFiles(
-      [file],
-      text: '',
-      subject: 'Результат измерения',
+  _shareFile(String filePath) async {
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(filePath)],
+        text: "",
+        subject: "Результат измерения",
+      ),
     );
   }
 
@@ -97,32 +87,35 @@ class _MeasureResultScreen extends StatelessWidget {
     required File file,
     required ReportSaverCubit cubit,
   }) {
-    Dialogs.showMenu(context: context, actions: [
-      // if (kDebugMode)
-      //   DialogAction(
-      //     title: "Посмотреть",
-      //     onPressed: () {
-      //       context.router.push(PDFReaderScreen(
-      //         pdfPath: file.path,
-      //         isAsset: false,
-      //       ));
-      //     },
-      //   ),
-      DialogAction(
-        title: "saveReportButton".tr(),
-        onPressed: () {
-          cubit.saveReport(file);
-          context.router.pop();
-        },
-      ),
-      DialogAction(
-        title: "shareReportButton".tr(),
-        onPressed: () {
-          _shareFile(file.path);
-          context.router.pop();
-        },
-      ),
-    ]);
+    Dialogs.showMenu(
+      context: context,
+      actions: [
+        // if (kDebugMode)
+        //   DialogAction(
+        //     title: "Посмотреть",
+        //     onPressed: () {
+        //       context.push('/pdf', extra: {
+        //         'pdfPath': file.path,
+        //         'isAsset': false,
+        //       });
+        //     },
+        //   ),
+        DialogAction(
+          title: "saveReportButton".tr(),
+          onPressed: () {
+            cubit.saveReport(file);
+            context.pop();
+          },
+        ),
+        DialogAction(
+          title: "shareReportButton".tr(),
+          onPressed: () {
+            _shareFile(file.path);
+            context.pop();
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -133,23 +126,22 @@ class _MeasureResultScreen extends StatelessWidget {
 
     return BlocListener<ReportSaverCubit, ReportSaverState>(
       listener: (context, state) {
-        state.maybeWhen(
-          saved: () {
+        switch (state) {
+          case ReportSaved():
             _showDialog(
               title: "successSaveFileTitle".tr(),
               text: "successSaveReportText".tr(),
               context: context,
             );
-          },
-          error: () {
+            break;
+          case ReportSaverError():
             _showDialog(
               title: "thereWasAnErrorTitle".tr(),
               text: "errorSaveReportText".tr(),
               context: context,
             );
-          },
-          orElse: () {},
-        );
+            break;
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -160,51 +152,54 @@ class _MeasureResultScreen extends StatelessWidget {
         floatingActionButton: BlocBuilder<ImageLoaderCubit, ImageLoaderState>(
           bloc: imageLoaderCubit,
           builder: (context, imageLoaderState) {
-            return imageLoaderState.maybeWhen(
-              loaded: (s) => BlocConsumer<ReportBuilderCubit, ReportBuilderState>(
-                listener: (context, reportShareState) {
-                  reportShareState.maybeWhen(
-                    loaded: (file) async {
-                      if (Platform.isIOS) {
-                        _shareFile(file.path);
-                      } else {
-                        _showMenu(
+            switch (imageLoaderState) {
+              case ImageLoaded(:final resultImageEntity):
+                return BlocConsumer<ReportBuilderCubit, ReportBuilderState>(
+                  listener: (context, reportShareState) {
+                    switch (reportShareState) {
+                      case ReportBuilderLoaded(:final report):
+                        if (Platform.isIOS) {
+                          _shareFile(report.path);
+                        } else {
+                          _showMenu(
+                            context: context,
+                            file: report,
+                            cubit: reportSaverCubit,
+                          );
+                        }
+                        break;
+                      case ReportBuilderError():
+                        _showDialog(
+                          title: "thereWasAnErrorTitle".tr(),
+                          text: "errorGeneratereport".tr(),
                           context: context,
-                          file: file,
-                          cubit: reportSaverCubit,
                         );
-                      }
-                    },
-                    error: () {
-                      _showDialog(
-                        title: "thereWasAnErrorTitle".tr(),
-                        text: "errorGeneratereport".tr(),
-                        context: context,
-                      );
-                    },
-                    orElse: () => null,
-                  );
-                },
-                builder: (context, reportShareState) {
-                  final shareCubit = context.read<ReportBuilderCubit>();
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
-                    child: PrimaryButton(
-                      text: 'Отправить отчет',
-                      onPressed: () => shareCubit.getReport(result, s),
-                      icon: reportShareState.maybeWhen(
-                        loading: () => const CupertinoActivityIndicator(
-                          radius: 10,
-                          color: NeuroWoodColors.white,
-                        ),
-                        orElse: () => null,
+                        break;
+                    }
+                  },
+                  builder: (context, reportShareState) {
+                    final shareCubit = context.read<ReportBuilderCubit>();
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
+                      child: PrimaryButton(
+                        text: 'Отправить отчет',
+                        onPressed: () =>
+                            shareCubit.getReport(result, resultImageEntity),
+                        icon: switch (reportShareState) {
+                          ReportBuilderLoading _ =>
+                            const CupertinoActivityIndicator(
+                              radius: 10,
+                              color: NeuroWoodColors.white,
+                            ),
+                          _ => null,
+                        },
                       ),
-                    ),
-                  );
-                },
-              ),
-              orElse: () => const SizedBox(),
-            );
+                    );
+                  },
+                );
+              default:
+                return const SizedBox();
+            }
           },
         ),
         body: SingleChildScrollView(
@@ -213,17 +208,17 @@ class _MeasureResultScreen extends StatelessWidget {
           child: Column(
             children: [
               MeasureResultCard(result: result),
-              const SizedBox(
-                height: 16,
-              ),
+              const SizedBox(height: 16),
               BlocBuilder<ImageLoaderCubit, ImageLoaderState>(
                 bloc: imageLoaderCubit,
                 builder: (context, state) {
-                  return state.maybeWhen(
-                    loaded: (s) {
+                  switch (state) {
+                    case ImageLoaded(:final resultImageEntity):
                       final double width = (screenWidth - 48) / 2;
-                      final items = List<ResultItem>.from(s.items);
-                      if((result.breeds?.length??0) > 1){
+                      final items = List<ResultItem>.from(
+                        resultImageEntity.items,
+                      );
+                      if ((result.breeds?.length ?? 0) > 1) {
                         items.removeAt(1);
                       }
                       return GridView.count(
@@ -234,30 +229,32 @@ class _MeasureResultScreen extends StatelessWidget {
                             .asMap()
                             .map((i, e) {
                               return MapEntry(
-                                  i,
-                                  ImageCard(
-                                    image: s.image,
-                                    width: width,
-                                    name: e.title,
-                                    onPressed: () {
-                                      MeasureResultImageEntity r = s.setSelected(i);
-                                      context.router.push(MeasureResultImage(
-                                        result: r,
-                                      ));
-                                    },
-                                  ));
+                                i,
+                                ImageCard(
+                                  image: resultImageEntity.image,
+                                  width: width,
+                                  name: e.title,
+                                  onPressed: () {
+                                    MeasureResultImageEntity r =
+                                        resultImageEntity.setSelected(i);
+                                    context.push(
+                                      '/measure-result-image',
+                                      extra: {'result': r},
+                                    );
+                                  },
+                                ),
+                              );
                             })
                             .values
                             .toList(),
                       );
-                    },
-                    error: () => const Center(
-                      child: Text('Не удалось загрузить изображение'),
-                    ),
-                    orElse: () => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
+                    case ImageLoaderError():
+                      return const Center(
+                        child: Text('Не удалось загрузить изображение'),
+                      );
+                    default:
+                      return const Center(child: CircularProgressIndicator());
+                  }
                 },
               ),
             ],

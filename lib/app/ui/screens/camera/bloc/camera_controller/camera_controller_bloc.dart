@@ -1,40 +1,61 @@
 import 'dart:developer';
+import 'dart:io';
 import 'dart:ui';
 
-import 'package:bloc/bloc.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-
 export 'package:camera/camera.dart';
-import 'package:gallery_saver/gallery_saver.dart';
 
 part 'camera_controller_event.dart';
 part 'camera_controller_state.dart';
 part 'camera_controller_bloc.freezed.dart';
 
-class CameraControllerBloc extends Bloc<CameraControllerEvent, CameraControllerState> {
+class CameraControllerBloc
+    extends Bloc<CameraControllerEvent, CameraControllerState> {
   CameraController? _camController;
   CameraController? get camController => _camController;
   bool _openedSettings = false;
 
-  CameraControllerBloc() : super(const _Initial()) {
+  CameraControllerBloc() : super(const CameraControllerInitial()) {
     on<CameraControllerEvent>((event, emit) async {
-      await event.map(
-        started: (e) => _started(e, emit),
-        init: (e) => _init(e, emit),
-        reinit: (e) => _reinit(e, emit),
-        takePhoto: (e) => _takePhoto(e, emit),
-        playPauseToggle: (e) => _playPauseToggle(e, emit),
-        disposeCamera: (e) => _disposeCamera(e, emit),
-        onViewFinderTap: (e) => _onViewFinderTap(e, emit),
-      );
+      switch (event) {
+        case CameraControllerStarted():
+          await _started(event, emit);
+          break;
+        case CameraControllerInit():
+          await _init(event, emit);
+          break;
+        case CameraControllerReinit():
+          await _reinit(event, emit);
+          break;
+        case CameraControllerTakePhoto():
+          await _takePhoto(event, emit);
+          break;
+        case CameraControllerTogglePause():
+          await _playPauseToggle(event, emit);
+          break;
+        case CameraControllerDisposeCamera():
+          _disposeCamera(event, emit);
+          break;
+        case CameraControllerOnViewFinderTap():
+          _onViewFinderTap(event, emit);
+          break;
+      }
     });
   }
 
-  _started(_Started event, Emitter<CameraControllerState> emit) {}
+  _started(
+    CameraControllerStarted event,
+    Emitter<CameraControllerState> emit,
+  ) {}
 
-  _reinit(_Reinit event, Emitter<CameraControllerState> emit) async {
-    if ((_camController != null && (_camController?.value.isInitialized ?? false))) {
+  _reinit(
+    CameraControllerReinit event,
+    Emitter<CameraControllerState> emit,
+  ) async {
+    if ((_camController != null &&
+        (_camController?.value.isInitialized ?? false))) {
       try {
         bool _ = await onNewCameraSelected(_camController!.description);
         emit(const CameraControllerState.ready());
@@ -49,21 +70,32 @@ class CameraControllerBloc extends Bloc<CameraControllerEvent, CameraControllerS
       }
     } else if (_openedSettings) {
       _openedSettings = false;
-      return emit.forEach(_initCamera(), onData: (CameraControllerState s) => s);
+      return emit.forEach(
+        _initCamera(),
+        onData: (CameraControllerState s) => s,
+      );
     } else {
-      return emit.forEach(_initCamera(), onData: (CameraControllerState s) => s);
+      return emit.forEach(
+        _initCamera(),
+        onData: (CameraControllerState s) => s,
+      );
     }
   }
 
-  _init(_Init event, Emitter<CameraControllerState> emit) async {
-    return await emit.forEach(_initCamera(), onData: (CameraControllerState s) => s);
+  _init(CameraControllerInit event, Emitter<CameraControllerState> emit) async {
+    return await emit.forEach(
+      _initCamera(),
+      onData: (CameraControllerState s) => s,
+    );
   }
 
   Stream<CameraControllerState> _initCamera() async* {
-    if (state is _Preparation) return;
+    if (state is CameraControllerPreparation) return;
     yield const CameraControllerState.preparation();
     final cams = await availableCameras();
-    final l = cams.where((e) => e.lensDirection == CameraLensDirection.back).toList();
+    final l = cams
+        .where((e) => e.lensDirection == CameraLensDirection.back)
+        .toList();
     if (l.isNotEmpty) {
       try {
         bool _ = await onNewCameraSelected(l.first);
@@ -80,15 +112,22 @@ class CameraControllerBloc extends Bloc<CameraControllerEvent, CameraControllerS
     }
   }
 
-  _takePhoto(_TakePhoto event, Emitter<CameraControllerState> emit) async {
+  _takePhoto(
+    CameraControllerTakePhoto event,
+    Emitter<CameraControllerState> emit,
+  ) async {
     XFile? photo = await _takePicture();
     if (photo != null) {
       return emit(CameraControllerState.takedPhoto(photo));
     }
   }
 
-  _playPauseToggle(_TogglePause event, Emitter<CameraControllerState> emit) async {
-    if (_camController == null || (_camController?.value.isInitialized ?? true)) {
+  _playPauseToggle(
+    CameraControllerTogglePause event,
+    Emitter<CameraControllerState> emit,
+  ) async {
+    if (_camController == null ||
+        (_camController?.value.isInitialized ?? true)) {
       return;
     }
 
@@ -99,12 +138,18 @@ class CameraControllerBloc extends Bloc<CameraControllerEvent, CameraControllerS
     }
   }
 
-  _disposeCamera(_DisposeCamera event, Emitter<CameraControllerState> emit) {
+  _disposeCamera(
+    CameraControllerDisposeCamera event,
+    Emitter<CameraControllerState> emit,
+  ) {
     _camController?.dispose();
     emit(const CameraControllerState.initial());
   }
 
-  _onViewFinderTap(_OnViewFinderTap event, Emitter<CameraControllerState> emit) {
+  _onViewFinderTap(
+    CameraControllerOnViewFinderTap event,
+    Emitter<CameraControllerState> emit,
+  ) {
     if (_camController == null) return;
     _camController!.setExposurePoint(event.offset);
     _camController!.setFocusPoint(event.offset);
@@ -121,11 +166,14 @@ class CameraControllerBloc extends Bloc<CameraControllerEvent, CameraControllerS
     }
 
     try {
-      final XFile file = await cameraController.takePicture();
+      final XFile picture = await cameraController.takePicture();
       try {
-        await GallerySaver.saveImage(file.path, albumName: "NeuroWood");
+        // await GallerySaver.saveImage(file.path, albumName: "NeuroWood");
+        final dir = Directory('/storage/emulated/0/Download'); // TODO: ios
+        final file = File('${dir.path}/${picture.path}');
+        await file.writeAsBytes(await picture.readAsBytes());
       } catch (_) {}
-      return file;
+      return picture;
     } on CameraException catch (e) {
       log('TakePicture exception $e');
       return null;

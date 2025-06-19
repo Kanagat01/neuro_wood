@@ -3,12 +3,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:gallery_saver/gallery_saver.dart';
 import 'package:neuro_wood/app/domain/entities/measure_result_image_entity.dart';
 import 'package:neuro_wood/core/services/permissions/permissions.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,12 +16,12 @@ part 'image_exporter_state.dart';
 part 'image_exporter_cubit.freezed.dart';
 
 class ImageExporterCubit extends Cubit<ImageExporterState> {
-  ImageExporterCubit({
-    required this.result,
-    required this.permissions,
-  }) : super(const ImageExporterState.initial()) {
-    rendersKeys =
-        List.generate(result.items.length, (i) => GlobalKey(debugLabel: '$i'));
+  ImageExporterCubit({required this.result, required this.permissions})
+    : super(const ImageExporterState.initial()) {
+    rendersKeys = List.generate(
+      result.items.length,
+      (i) => GlobalKey(debugLabel: '$i'),
+    );
   }
 
   final MeasureResultImageEntity result;
@@ -31,8 +30,9 @@ class ImageExporterCubit extends Cubit<ImageExporterState> {
   late List<GlobalKey> rendersKeys;
 
   Future<PermissionStatus> _checkPermission() async {
-    PermissionStatus status =
-        await permissions.checkPermission(PermissionsEnum.photos);
+    PermissionStatus status = await permissions.checkPermission(
+      PermissionsEnum.photos,
+    );
     if (status == PermissionStatus.denied ||
         status == PermissionStatus.restricted) {
       status = await permissions.request(PermissionsEnum.photos);
@@ -59,10 +59,7 @@ class ImageExporterCubit extends Cubit<ImageExporterState> {
     );
     for (int i = 0; i < result.items.length && !hasError; i++) {
       CustomPainter painter = result.items[i].foregroundPainter;
-      final pngBytes = await _prepareImage(
-        painter: painter,
-        size: size,
-      );
+      final pngBytes = await _prepareImage(painter: painter, size: size);
       if (pngBytes == null) {
         hasError = true;
         continue;
@@ -99,10 +96,7 @@ class ImageExporterCubit extends Cubit<ImageExporterState> {
       result.imageInfo.image.width.toDouble(),
       result.imageInfo.image.height.toDouble(),
     );
-    final pngBytes = await _prepareImage(
-      painter: painter,
-      size: size,
-    );
+    final pngBytes = await _prepareImage(painter: painter, size: size);
     if (pngBytes == null) {
       emit(const ImageExporterState.error(ErrorType.undefined));
       return;
@@ -134,13 +128,16 @@ class ImageExporterCubit extends Cubit<ImageExporterState> {
     ui.Picture pic = recorder.endRecording();
     // log("pic - ${s.elapsedMilliseconds}");
 
-    ui.Image renderedImage =
-        await pic.toImage(size.width.floor(), size.height.floor());
+    ui.Image renderedImage = await pic.toImage(
+      size.width.floor(),
+      size.height.floor(),
+    );
     // log("renderedImage - ${s.elapsedMilliseconds}");
 
     //долгая операция
-    ByteData? byteData =
-        await renderedImage.toByteData(format: ui.ImageByteFormat.png);
+    ByteData? byteData = await renderedImage.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
     // log("byteData - ${s.elapsedMilliseconds}");
 
     Uint8List? bytearray = byteData?.buffer.asUint8List();
@@ -157,9 +154,11 @@ class ImageExporterCubit extends Cubit<ImageExporterState> {
     String dir = (await getTemporaryDirectory()).path;
     File file = File('$dir/$fileName');
     await file.writeAsBytes(pngBytes);
-    bool? saveRes =
-        await GallerySaver.saveImage(file.path, albumName: "NeuroWood");
+    // bool? saveRes = await GallerySaver.saveImage(
+    //   file.path,
+    //   albumName: "NeuroWood",
+    // );
     await file.delete();
-    return saveRes;
+    return true;
   }
 }

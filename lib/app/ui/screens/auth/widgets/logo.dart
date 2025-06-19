@@ -4,7 +4,7 @@ import 'package:neuro_wood/core/ui/neuro_wood_icons.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
 class Logo extends StatelessWidget {
-  const Logo({Key? key}) : super(key: key);
+  const Logo({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +17,7 @@ class Logo extends StatelessWidget {
           size: 72,
           color: NeuroWoodColors.oldGreen,
         ),
-        const SizedBox(
-          width: 15,
-        ),
+        const SizedBox(width: 15),
         const Text(
           "appName",
           style: TextStyle(
@@ -31,9 +29,7 @@ class Logo extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ).tr(),
-        const SizedBox(
-          width: 13,
-        ),
+        const SizedBox(width: 13),
       ],
     );
   }

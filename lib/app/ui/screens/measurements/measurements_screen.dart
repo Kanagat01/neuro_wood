@@ -1,18 +1,17 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:neuro_wood/app/domain/entities/mesure_result_entity.dart';
 import 'package:neuro_wood/core/helpers/extensions.dart';
-import 'package:neuro_wood/core/router.gr.dart';
+
 import 'package:neuro_wood/core/ui/dialogs/dialogs.dart';
 import 'package:neuro_wood/core/ui/theme.dart';
 
 import 'cubit/measurements_cubit.dart';
 
 class MeasurementsScreen extends StatelessWidget {
-  const MeasurementsScreen({Key? key}) : super(key: key);
+  const MeasurementsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,30 +20,32 @@ class MeasurementsScreen extends StatelessWidget {
     return Scaffold(
       body: BlocBuilder<MeasurementsCubit, MeasurementsState>(
         builder: (context, state) {
-          return state.map(
-            initial: (_) {
+          switch (state) {
+            case MeasurementsInitial():
               return const SizedBox();
-            },
-            loaded: (s) {
-              final list = s.list.entries.toList();
+
+            case MeasurementsLoaded(:final list):
+              final items = list.entries.toList();
               return ListView.separated(
                 padding: const EdgeInsets.all(
                   16,
                 ).copyWith(top: 16 + MediaQuery.of(context).padding.top),
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemCount: list.length,
+                itemCount: items.length,
                 itemBuilder: (context, i) {
                   return _ListGroupedByDay(
-                    list: list[i].value,
-                    day: list[i].key,
+                    list: items[i].value,
+                    day: items[i].key,
                     timeFormat: timeFormat,
                   );
                 },
               );
-            },
-            loading: (s) => const Center(child: CircularProgressIndicator()),
-            empty: (s) => Center(child: Text("emptyMeasureResults".tr())),
-          );
+
+            case MeasurementsLoading():
+              return const Center(child: CircularProgressIndicator());
+            case MeasurementsEmpty():
+              return Center(child: Text("emptyMeasureResults".tr()));
+          }
         },
       ),
     );
@@ -56,11 +57,10 @@ class _ListGroupedByDay extends StatelessWidget {
   final DateTime day;
   final DateFormat timeFormat;
   const _ListGroupedByDay({
-    Key? key,
     required this.list,
     required this.day,
     required this.timeFormat,
-  }) : super(key: key);
+  });
 
   String getDate() {
     DateTime now = DateTime.now();
@@ -102,8 +102,7 @@ class _ListGroupedByDay extends StatelessWidget {
 }
 
 class _MeasureCard extends StatelessWidget {
-  const _MeasureCard({Key? key, required this.result, required this.timeFormat})
-    : super(key: key);
+  const _MeasureCard({required this.result, required this.timeFormat});
   final MeasureResultEntityBase result;
   final DateFormat timeFormat;
 
@@ -118,7 +117,7 @@ class _MeasureCard extends StatelessWidget {
       text: text,
       actions: [
         DialogAction(
-          onPressed: () => context.router.pop(true),
+          onPressed: () => Navigator.of(context).pop(true),
           title: "okButton".tr(),
         ),
       ],
@@ -137,7 +136,8 @@ class _MeasureCard extends StatelessWidget {
       topLeftTextStyle = topLeftTextStyle?.copyWith(color: NeuroWoodColors.red);
       onTapCard = result.hasFrontData
           ? () {}
-          : () => context.router.push(ParametersMeasureScreen(measure: result));
+          : () =>
+                context.push('/parameters-measure', extra: {'measure': result});
     } else if (result is MeasureResultEntityError) {
       topLeftText = 'Ошибка обработки';
       topLeftTextStyle = topLeftTextStyle?.copyWith(color: NeuroWoodColors.red);
@@ -152,16 +152,16 @@ class _MeasureCard extends StatelessWidget {
     } else if (result is MeasureResultEntityFinish) {
       final res = result as MeasureResultEntityFinish;
       // topLeftText = res.licensePlateText.toUpperCase();
-      topLeftText = describeEnum(res.type).tr();
+      topLeftText = res.type.name.tr();
       volume = "${res.woodVolumeEllipse.toStringAsFixed(2)} м³";
       bread = res.breed;
-      onTapCard = () => context.router.push(MeasureResultScreen(result: res));
+      onTapCard = () => context.push('/measure-result', extra: {'result': res});
     } else {
       // final res = result as MeasureResultEntitySucess;
       topLeftText = 'Не заполнен';
       topLeftTextStyle = topLeftTextStyle?.copyWith(color: NeuroWoodColors.red);
       onTapCard = () =>
-          context.router.push(ParametersMeasureScreen(measure: result));
+          context.push('/parameters-measure', extra: {'measure': result});
     }
     return InkWell(
       onTap: onTapCard,
