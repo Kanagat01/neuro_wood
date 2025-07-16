@@ -9,7 +9,7 @@ build/
 .melos_tool/
 coverage/
 .dart_tool/
-firebase_options.dart
+lib/firebase_options.dart
 
 # VS Code
 .vscode/
